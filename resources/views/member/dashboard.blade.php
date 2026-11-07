@@ -20,7 +20,7 @@
         ];
         $engagementCards = [
             ['label' => 'Views', 'value' => $stats['views'], 'icon' => 'bi-eye'],
-            ['label' => 'Likes', 'value' => $stats['likes'], 'icon' => 'bi-heart'],
+            ['label' => 'Likes', 'value' => $stats['likes'], 'icon' => 'bi-hand-thumbs-up'],
             ['label' => 'Comments', 'value' => $stats['comments'], 'icon' => 'bi-chat'],
         ];
     @endphp

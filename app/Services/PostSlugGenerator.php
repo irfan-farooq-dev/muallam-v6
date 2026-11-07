@@ -15,6 +15,11 @@ class PostSlugGenerator
      */
     private const MAX_BASE_LENGTH = 200;
 
+    /**
+     * Words used by other /posts/... addresses, so a post can never take them.
+     */
+    private const RESERVED = ['create', 'preview', 'images'];
+
     public function generate(string $title): string
     {
         $base = Str::of($title)->slug()->limit(self::MAX_BASE_LENGTH, '')->trim('-')->toString() ?: 'post';
@@ -24,7 +29,7 @@ class PostSlugGenerator
             ->pluck('slug')
             ->flip();
 
-        if (! $taken->has($base)) {
+        if (! $taken->has($base) && ! in_array($base, self::RESERVED, true)) {
             return $base;
         }
 

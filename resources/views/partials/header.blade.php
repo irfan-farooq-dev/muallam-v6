@@ -33,6 +33,10 @@
         </nav>
 
         <div class="header-account d-flex align-items-center gap-2 ms-3">
+            <form method="GET" action="{{ route('search') }}" class="header-search d-none d-lg-flex" role="search">
+                <input type="search" name="q" value="{{ request()->routeIs('search') ? request('q') : '' }}" class="form-control form-control-sm" placeholder="Search" aria-label="Search articles">
+            </form>
+            <a href="{{ route('search') }}" class="btn btn-link text-secondary d-lg-none px-1" aria-label="Search"><i class="bi bi-search"></i></a>
             @guest
                 <a href="{{ Route::has('login') ? route('login') : '#' }}" class="btn btn-outline-accent btn-sm d-none d-sm-inline-block">Sign in</a>
                 <a href="{{ Route::has('register') ? route('register') : '#' }}" class="btn btn-accent btn-sm d-none d-sm-inline-block">Sign up</a>

@@ -6,12 +6,7 @@
 @section('content')
     <section class="section">
         <div class="container">
-            <nav aria-label="breadcrumb" class="mb-2">
-                <ol class="breadcrumb small mb-0">
-                    <li class="breadcrumb-item"><a href="{{ route('categories.index') }}">Categories</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">{{ $category->name }}</li>
-                </ol>
-            </nav>
+            <x-breadcrumbs class="mb-2" :items="[['Categories', route('categories.index')], [$category->name]]" />
             <h2 class="h3 mb-1">{{ $category->name }}</h2>
             @if ($category->description)
                 <p class="text-secondary mb-4">{{ $category->description }}</p>

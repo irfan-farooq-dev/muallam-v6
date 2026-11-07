@@ -8,7 +8,9 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Posts\MyPostsController;
+use App\Http\Controllers\Posts\PostController;
 use App\Http\Controllers\Posts\PostEditorController;
 use App\Http\Controllers\Posts\PostImageUploadController;
 use App\Http\Controllers\Posts\PostPreviewController;
@@ -16,14 +18,17 @@ use App\Http\Controllers\Profile\PasswordController;
 use App\Http\Controllers\Profile\ProfileController;
 use App\Http\Controllers\Profile\ProfilePhotoController;
 use App\Http\Controllers\Profile\SlugController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\UserBioController;
 use App\Models\Post;
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'home')->name('home');
+Route::get('/', HomeController::class)->name('home');
+Route::get('search', SearchController::class)->name('search');
 Route::get('categories', [CategoryController::class, 'index'])->name('categories.index');
 Route::get('category/{category}', [CategoryController::class, 'show'])->name('categories.show');
 Route::get('users/{slug}/bio', [UserBioController::class, 'show'])->name('users.bio');
+Route::get('users/{slug}/posts', [UserBioController::class, 'posts'])->name('users.posts');
 
 Route::middleware('guest')->group(function () {
     Route::get('register', [RegisterController::class, 'create'])->name('register');
@@ -81,3 +86,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('posts/{post}', [PostEditorController::class, 'update'])->can('update', 'post')->name('posts.update');
     Route::delete('posts/{post}', [PostEditorController::class, 'destroy'])->can('delete', 'post')->name('posts.destroy');
 });
+
+// Registered last so fixed addresses such as /posts/create are matched first.
+Route::get('posts/{post}', [PostController::class, 'show'])->name('posts.show');

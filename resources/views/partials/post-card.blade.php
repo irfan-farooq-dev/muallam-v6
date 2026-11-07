@@ -24,15 +24,15 @@
 
         <div class="post-card-meta mt-auto d-flex flex-wrap align-items-center gap-2 small text-secondary">
             <x-user-avatar :user="$author" :size="24" />
-            @if ($author->is_bio_public)
-                <a href="{{ route('users.bio', $author->slug) }}" class="text-secondary">{{ $author->name }}</a>
+            @if ($author->exists)
+                <a href="{{ route('users.posts', $author->slug) }}" class="text-secondary">{{ $author->name }}</a>
             @else
                 <span>{{ $author->name }}</span>
             @endif
             <span>&middot;</span>
             <time datetime="{{ $post->published_at->toIso8601String() }}">{{ $post->published_at->format('j M Y') }}</time>
             <span class="ms-auto d-flex gap-3">
-                <span title="Likes"><i class="bi bi-heart me-1"></i>{{ number_format($post->likes_count) }}</span>
+                <span title="Likes"><i class="bi bi-hand-thumbs-up me-1"></i>{{ number_format($post->likes_count) }}</span>
                 <span title="Comments"><i class="bi bi-chat me-1"></i>{{ number_format($post->comments_count) }}</span>
             </span>
         </div>

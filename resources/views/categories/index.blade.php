@@ -6,6 +6,7 @@
 @section('content')
     <section class="section">
         <div class="container">
+            <x-breadcrumbs class="mb-2" :items="[['Categories']]" />
             <h2 class="h3 mb-4">Categories</h2>
 
             @if ($categories->isEmpty())

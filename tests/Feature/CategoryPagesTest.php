@@ -103,18 +103,15 @@ class CategoryPagesTest extends TestCase
         $this->assertCount(1, $this->get(route('categories.show', ['category' => 'databases', 'page' => 2]))->viewData('posts'));
     }
 
-    public function test_author_name_links_to_their_bio_only_when_it_is_public(): void
+    public function test_author_names_link_to_their_posts_page(): void
     {
         $category = Category::factory()->create(['slug' => 'databases']);
-        $public = User::factory()->withPublicBio()->create(['name' => 'Public Author', 'slug' => 'public-author']);
-        $private = User::factory()->create(['name' => 'Private Author', 'slug' => 'private-author']);
-        Post::factory()->for($category)->for($public)->published()->create();
-        Post::factory()->for($category)->for($private)->published()->create();
+        $author = User::factory()->create(['name' => 'Private Author', 'slug' => 'private-author']);
+        Post::factory()->for($category)->for($author)->published()->create();
 
         $this->get(route('categories.show', 'databases'))
-            ->assertSee(route('users.bio', 'public-author'))
-            ->assertDontSee(route('users.bio', 'private-author'))
-            ->assertSee('Private Author');
+            ->assertSee(route('users.posts', 'private-author'))
+            ->assertDontSee(route('users.bio', 'private-author'));
     }
 
     public function test_empty_category_shows_a_friendly_message(): void

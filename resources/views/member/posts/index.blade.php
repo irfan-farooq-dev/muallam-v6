@@ -54,6 +54,7 @@
                     </div>
                     <x-post-status-badge :post="$post" />
                     <div class="d-flex gap-1">
+                        <a href="{{ route('posts.show', $post) }}" class="btn btn-sm btn-outline-secondary" aria-label="View {{ $post->title }}" title="View" target="_blank"><i class="bi bi-eye"></i></a>
                         <a href="{{ route('posts.edit', $post) }}" class="btn btn-sm btn-outline-accent" aria-label="Edit {{ $post->title }}"><i class="bi bi-pencil"></i></a>
                         <form method="POST" action="{{ route('posts.destroy', $post) }}"
                               onsubmit="return confirm(@js('Delete "'.$post->title.'"? This cannot be undone.'))">

@@ -8,6 +8,7 @@
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-lg-8">
+                    <x-breadcrumbs class="mb-3" :items="[[$profileUser->name, route('users.posts', $profileUser->slug)], ['About']]" />
                     @if ($isOwner && (! $profileUser->is_bio_public || ! $profileUser->is_active))
                         <div class="alert alert-warning d-flex justify-content-between align-items-center flex-wrap gap-2">
                             <span><i class="bi bi-eye-slash me-1"></i>Only you can see this page. Your bio is hidden from everyone else.</span>
@@ -23,7 +24,10 @@
                                 <x-user-avatar :user="$profileUser" :size="88" />
                                 <div>
                                     <h2 class="h3 mb-1">{{ $profileUser->name }}</h2>
-                                    <div class="text-secondary small">Member since {{ $profileUser->created_at->format('F Y') }}</div>
+                                    <div class="text-secondary small">
+                                        Member since {{ $profileUser->created_at->format('F Y') }}
+                                        &middot; <a href="{{ route('users.posts', $profileUser->slug) }}">Posts by {{ $profileUser->name }}</a>
+                                    </div>
                                 </div>
                             </div>
 

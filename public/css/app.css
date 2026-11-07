@@ -385,3 +385,54 @@
 .post-content .ql-align-center { text-align: center; }
 .post-content .ql-align-right { text-align: right; }
 .post-content .ql-align-justify { text-align: justify; }
+
+.post-footer {
+    border-top: 1px solid #e9ecef;
+}
+
+.author-box {
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+/* Search */
+.home-search {
+    max-width: 560px;
+}
+
+.header-search .form-control {
+    width: 180px;
+    border-radius: 20px;
+    font-family: var(--nav-font);
+}
+
+.category-chip {
+    background: #f1f3f5;
+    color: var(--default-color);
+    font-family: var(--nav-font);
+    font-weight: 500;
+    padding: 0.5em 0.9em;
+}
+
+.category-chip:hover {
+    background: var(--accent-color);
+    color: var(--contrast-color);
+}
+
+/* Breadcrumbs */
+.site-breadcrumbs .breadcrumb {
+    font-family: var(--nav-font);
+}
+
+.site-breadcrumbs .breadcrumb-item a {
+    color: var(--accent-color);
+    text-decoration: none;
+}
+
+.site-breadcrumbs .breadcrumb-item a:hover {
+    text-decoration: underline;
+}
+
+.site-breadcrumbs .breadcrumb-item.active {
+    color: var(--bs-secondary-color);
+}
