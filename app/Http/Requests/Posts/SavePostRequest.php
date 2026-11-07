@@ -3,7 +3,6 @@
 namespace App\Http\Requests\Posts;
 
 use App\Enums\PostStatus;
-use App\Models\Post;
 use App\Services\PostBodySanitizer;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -20,21 +19,16 @@ class SavePostRequest extends FormRequest
 
     public const IMAGE_MAX_KILOBYTES = 4096;
 
+    public const ACCESS_PASSWORD_MIN = 6;
+
     /**
-     * Statuses offered in the editor. "Restricted" can be chosen once the sharing feature exists;
-     * until then a post that is already restricted may keep that status.
+     * Statuses the editor can produce.
      *
      * @return list<PostStatus>
      */
-    public static function editableStatuses(?Post $post = null): array
+    public static function editableStatuses(): array
     {
-        $statuses = [PostStatus::Draft, PostStatus::Published, PostStatus::Private];
-
-        if ($post?->status === PostStatus::Restricted) {
-            $statuses[] = PostStatus::Restricted;
-        }
-
-        return $statuses;
+        return [PostStatus::Draft, PostStatus::Published, PostStatus::Private, PostStatus::Restricted];
     }
 
     public function authorize(): bool
@@ -81,7 +75,12 @@ class SavePostRequest extends FormRequest
                     $fail('Write something in the post before saving.');
                 }
             }],
-            'status' => ['required', Rule::in(array_map(fn (PostStatus $status): string => $status->value, self::editableStatuses($this->route('post'))))],
+            'status' => ['required', Rule::in(array_map(fn (PostStatus $status): string => $status->value, self::editableStatuses()))],
+            // Invited readers need this password to open a restricted post. Left empty on an existing restricted post, the old one is kept.
+            'access_password' => [
+                Rule::requiredIf(fn (): bool => $this->input('status') === PostStatus::Restricted->value && ! $this->route('post')?->access_password),
+                'nullable', 'string', 'min:'.self::ACCESS_PASSWORD_MIN, 'max:72',
+            ],
             'publish_option' => ['nullable', 'in:now,schedule'],
             'scheduled_at' => [
                 Rule::requiredIf(fn (): bool => $this->input('status') === PostStatus::Published->value && $this->input('publish_option') === 'schedule'),
@@ -103,6 +102,8 @@ class SavePostRequest extends FormRequest
     {
         return [
             'category_id.required' => 'Choose a category.',
+            'access_password.required' => 'Set a password that invited readers will need to open the post.',
+            'access_password.min' => 'The post password must be at least '.self::ACCESS_PASSWORD_MIN.' characters.',
             'category_id.exists' => 'Choose one of the listed categories.',
             'scheduled_at.required' => 'Choose when the post should go live.',
             'scheduled_at.after' => 'The scheduled time must be in the future.',
@@ -118,9 +119,7 @@ class SavePostRequest extends FormRequest
      */
     private function allowedVisibilities(): array
     {
-        return $this->route('post')?->status === PostStatus::Restricted
-            ? ['public', 'private', 'restricted']
-            : ['public', 'private'];
+        return ['public', 'private', 'restricted'];
     }
 
     private function statusFromForm(): ?string

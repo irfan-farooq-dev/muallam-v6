@@ -111,12 +111,21 @@
                                 <input class="form-check-input" type="radio" name="visibility" id="visibility_private" value="private" x-model="visibility" @change="dirty = true">
                                 <label class="form-check-label" for="visibility_private">Only me <span class="text-secondary small">(private)</span></label>
                             </div>
-                            @if ($isRestricted)
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="visibility" id="visibility_restricted" value="restricted" x-model="visibility" @change="dirty = true">
-                                    <label class="form-check-label" for="visibility_restricted">Restricted <span class="text-secondary small">(sharing arrives later)</span></label>
-                                </div>
-                            @endif
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="visibility" id="visibility_restricted" value="restricted" x-model="visibility" @change="dirty = true">
+                                <label class="form-check-label" for="visibility_restricted">Invited people only <span class="text-secondary small">(restricted)</span></label>
+                            </div>
+                            <div class="mt-2" x-show="visibility === 'restricted'" x-cloak>
+                                <label for="access_password" class="form-label small text-secondary mb-1">
+                                    Post password {{ $post->access_password ? '(leave empty to keep the current one)' : '' }}
+                                </label>
+                                <input type="text" id="access_password" name="access_password" autocomplete="off" maxlength="72"
+                                       @class(['form-control form-control-sm', 'is-invalid' => $errors->has('access_password')])
+                                       placeholder="{{ $post->access_password ? 'Unchanged' : 'At least '.\App\Http\Requests\Posts\SavePostRequest::ACCESS_PASSWORD_MIN.' characters' }}"
+                                       @input="dirty = true">
+                                <small class="text-secondary d-block">Invited readers need this. Tell them yourself; it is never put in the invite email.</small>
+                                <div class="field-error">{{ $errors->first('access_password') }}</div>
+                            </div>
                             <div class="field-error">{{ $errors->first('visibility') ?: $errors->first('status') }}</div>
                         </div>
 
@@ -187,6 +196,10 @@
             </div>
         </div>
     </form>
+
+    @if ($post->exists && $post->status === \App\Enums\PostStatus::Restricted)
+        @include('member.posts.partials.sharing', ['post' => $post, 'shares' => $shares])
+    @endif
 
     @if ($post->exists)
         <form method="POST" action="{{ route('posts.destroy', $post) }}" class="mt-4 text-end"
@@ -305,7 +318,7 @@
 
                 get publishHint() {
                     if (this.visibility === 'private') return 'Private posts are only visible to you.';
-                    if (this.visibility === 'restricted') return 'Restricted posts are only visible to you for now.';
+                    if (this.visibility === 'restricted') return 'Only people you invite below (with the password) can read it.';
                     if (this.schedule) return 'The post goes live automatically at the chosen time.';
                     return this.isLive ? 'Saves your changes to the live post.' : 'Publishing makes the post visible to everyone right away.';
                 },

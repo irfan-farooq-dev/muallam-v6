@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Category;
+use App\Models\Post;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -54,6 +55,12 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('register', fn (Request $request): Limit => Limit::perMinute(10)->by($request->ip()));
 
         // Per-IP ceiling across all emails; LoginRequest also locks each email + IP pair after 5 failures.
+        // Guessing a restricted post's password: 5 tries per minute per post and IP.
+        // Rate limiting runs before the {post} slug is turned into a model, so the raw slug is used as the key.
+        RateLimiter::for('post-access', fn (Request $request): Limit => Limit::perMinute(5)->by(
+            $request->ip().'|'.($request->route('post') instanceof Post ? $request->route('post')->slug : (string) $request->route('post'))
+        ));
+
         RateLimiter::for('password-reset', fn (Request $request): Limit => Limit::perMinute(5)->by($request->ip()));
 
         RateLimiter::for('login', fn (Request $request): Limit => Limit::perMinute(20)->by($request->ip()));

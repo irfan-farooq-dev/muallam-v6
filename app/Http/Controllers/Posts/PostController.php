@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Post;
 use App\Services\PostComments;
 use App\Services\PostLikes;
+use App\Services\PostSharing;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -18,10 +19,13 @@ class PostController extends Controller
 {
     private const RELATED_POSTS = 3;
 
-    public function show(Request $request, Post $post, PostLikes $likes, PostComments $comments): View
+    public function show(Request $request, Post $post, PostLikes $likes, PostComments $comments, PostSharing $sharing): View
     {
+        // Invited readers of a restricted post get in through the invite link and password (PostAccessController).
+        $isInvitedReader = ! Gate::allows('view', $post) && $sharing->hasAccess($request, $post);
+
         // Hidden posts look like they do not exist to anyone who may not see them.
-        abort_unless(Gate::allows('view', $post), 404);
+        abort_unless(Gate::allows('view', $post) || $isInvitedReader, 404);
 
         $post->load(['user', 'category']);
         $isPublic = Post::publiclyVisible()->whereKey($post->getKey())->exists();
@@ -33,6 +37,7 @@ class PostController extends Controller
         return view('posts.show', [
             'post' => $post,
             'isPublic' => $isPublic,
+            'isInvitedReader' => $isInvitedReader,
             'likedByMe' => $likes->likes($request->user(), $post),
             'comments' => $isPublic ? $comments->thread($post, Gate::allows('update', $post)) : collect(),
             'related' => $this->related($post),

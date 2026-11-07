@@ -67,7 +67,7 @@ class PostEditorTest extends TestCase
             ->assertSee('Preview')
             ->assertSee('value="public"', false)
             ->assertSee('value="private"', false)
-            ->assertDontSee('value="restricted"', false)
+            ->assertSee('value="restricted"', false)
             ->assertSee('<option value="'.$general->id.'" selected>General</option>', false)
             ->assertSee('Science')
             ->assertDontSee('Hidden Topic')
@@ -143,7 +143,8 @@ class PostEditorTest extends TestCase
             'missing category' => [['category_id' => ''], 'category_id'],
             'unknown category' => [['category_id' => 999], 'category_id'],
             'unknown button' => [['action' => 'delete-everything'], 'action'],
-            'restricted visibility (not yet available)' => [['action' => 'publish', 'visibility' => 'restricted'], 'visibility'],
+            'restricted without a password' => [['action' => 'publish', 'visibility' => 'restricted'], 'access_password'],
+            'restricted with a short password' => [['action' => 'publish', 'visibility' => 'restricted', 'access_password' => 'abc'], 'access_password'],
             'schedule without a time' => [['action' => 'publish', 'schedule' => '1', 'scheduled_at' => ''], 'scheduled_at'],
             'schedule in the past' => [['action' => 'publish', 'schedule' => '1', 'scheduled_at' => '2020-01-01T10:00'], 'scheduled_at'],
         ];
@@ -328,7 +329,7 @@ class PostEditorTest extends TestCase
 
         $this->actingAs($user)->put(route('posts.update', $post), $this->input(['action' => 'publish', 'visibility' => 'restricted']))
             ->assertSessionHasNoErrors()
-            ->assertSessionHas('success', 'Post saved. It is restricted, so only you can see it for now.');
+            ->assertSessionHas('success', 'Post saved. It is restricted: only people you invite (with the password) can read it.');
 
         $this->assertSame(PostStatus::Restricted, $post->fresh()->status);
     }

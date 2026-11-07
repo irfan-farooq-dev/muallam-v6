@@ -10,7 +10,14 @@
 @endif
 
 @section('content')
-    @unless ($isPublic)
+    @if ($isInvitedReader)
+        <div class="preview-banner">
+            <div class="container py-2">
+                <i class="bi bi-shield-lock me-1"></i>
+                <strong>Shared with you privately</strong> by {{ $post->user->name }}. Please don't pass on the link or the password.
+            </div>
+        </div>
+    @elseif (! $isPublic)
         <div class="preview-banner">
             <div class="container d-flex flex-wrap align-items-center justify-content-between gap-2 py-2">
                 <span>
@@ -18,16 +25,20 @@
                     <strong>Not public.</strong>
                     @if ($post->isScheduled())
                         Scheduled to go live on {{ $post->published_at->format('j M Y, g:i a') }}.
+                    @elseif ($post->status === \App\Enums\PostStatus::Restricted)
+                        This post is restricted: only people you invite (with the password) can read it.
                     @else
                         This post is {{ strtolower($post->status->label()) }}, so only you{{ auth()->user()->isAdmin() && ! auth()->user()->is($post->user) ? ' (as an admin) and its author' : '' }} can see it.
                     @endif
                 </span>
                 @can('update', $post)
-                    <a href="{{ route('posts.edit', $post) }}" class="btn btn-sm btn-outline-accent">Edit post</a>
+                    <a href="{{ route('posts.edit', $post) }}{{ $post->status === \App\Enums\PostStatus::Restricted ? '#sharing' : '' }}" class="btn btn-sm btn-outline-accent">
+                        {{ $post->status === \App\Enums\PostStatus::Restricted ? 'Manage sharing' : 'Edit post' }}
+                    </a>
                 @endcan
             </div>
         </div>
-    @endunless
+    @endif
 
     <section class="section">
         <div class="container">

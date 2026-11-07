@@ -12,11 +12,13 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Posts\CommentController;
 use App\Http\Controllers\Posts\LikedPostsController;
 use App\Http\Controllers\Posts\MyPostsController;
+use App\Http\Controllers\Posts\PostAccessController;
 use App\Http\Controllers\Posts\PostController;
 use App\Http\Controllers\Posts\PostEditorController;
 use App\Http\Controllers\Posts\PostImageUploadController;
 use App\Http\Controllers\Posts\PostLikeController;
 use App\Http\Controllers\Posts\PostPreviewController;
+use App\Http\Controllers\Posts\PostShareController;
 use App\Http\Controllers\Profile\PasswordController;
 use App\Http\Controllers\Profile\ProfileController;
 use App\Http\Controllers\Profile\ProfilePhotoController;
@@ -88,6 +90,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('posts/{post}/edit', [PostEditorController::class, 'edit'])->can('update', 'post')->name('posts.edit');
     Route::put('posts/{post}', [PostEditorController::class, 'update'])->can('update', 'post')->name('posts.update');
     Route::delete('posts/{post}', [PostEditorController::class, 'destroy'])->can('delete', 'post')->name('posts.destroy');
+
+    Route::post('posts/{post}/shares', [PostShareController::class, 'store'])
+        ->can('update', 'post')->middleware('throttle:10,1')->name('posts.shares.store');
+    Route::post('posts/{post}/shares/{share}/resend', [PostShareController::class, 'resend'])
+        ->can('update', 'post')->middleware('throttle:10,1')->scopeBindings()->name('posts.shares.resend');
+    Route::delete('posts/{post}/shares/{share}', [PostShareController::class, 'destroy'])
+        ->can('update', 'post')->scopeBindings()->name('posts.shares.destroy');
 });
 
 Route::middleware('auth')->group(function () {
@@ -105,6 +114,10 @@ Route::middleware('auth')->group(function () {
     Route::delete('comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
     Route::patch('comments/{comment}/visibility', [CommentController::class, 'visibility'])->name('comments.visibility');
 });
+
+// Invited readers of restricted posts: invite link, then the post password.
+Route::get('posts/{post}/access', [PostAccessController::class, 'show'])->name('posts.access');
+Route::post('posts/{post}/access', [PostAccessController::class, 'unlock'])->middleware('throttle:post-access')->name('posts.access.unlock');
 
 // Registered last so fixed addresses such as /posts/create are matched first.
 Route::get('posts/{post}', [PostController::class, 'show'])->name('posts.show');

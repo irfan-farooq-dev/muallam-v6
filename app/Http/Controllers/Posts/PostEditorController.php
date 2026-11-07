@@ -85,6 +85,7 @@ class PostEditorController extends Controller
     {
         return view('member.posts.form', [
             'post' => $post,
+            'shares' => $post->exists ? $post->shares()->latest()->get() : collect(),
             'categories' => Category::query()->active()->get(['id', 'name']),
             'defaultCategoryId' => Category::default()?->id,
         ]);
@@ -99,6 +100,7 @@ class PostEditorController extends Controller
 
         return [
             ...$request->safe()->only(['title', 'summary', 'category_id', 'body', 'allow_comments']),
+            ...($request->filled('access_password') ? ['access_password' => $request->validated('access_password')] : []),
             'status' => $status,
             'published_at' => $this->publishedAt($request, $post, $status),
         ];
@@ -128,7 +130,7 @@ class PostEditorController extends Controller
             $post->isScheduled() => "Post {$verb}. It will go live on {$post->published_at->format('j M Y, g:i a')}.",
             $post->status === PostStatus::Published => "Post {$verb} and published.",
             $post->status === PostStatus::Private => "Post {$verb}. It is private, so only you can see it.",
-            $post->status === PostStatus::Restricted => "Post {$verb}. It is restricted, so only you can see it for now.",
+            $post->status === PostStatus::Restricted => "Post {$verb}. It is restricted: only people you invite (with the password) can read it.",
             default => "Post {$verb} as a draft.",
         };
     }
