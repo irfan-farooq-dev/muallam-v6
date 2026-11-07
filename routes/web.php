@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
@@ -122,6 +123,7 @@ Route::middleware('auth')->group(function () {
 // Admin panel (Sneat). Admins only.
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'admin'])->group(function () {
     Route::get('/', AdminDashboardController::class)->name('dashboard');
+    Route::resource('users', AdminUserController::class)->only(['index', 'edit', 'update', 'destroy']);
 });
 
 // Invited readers of restricted posts: invite link, then the post password.
