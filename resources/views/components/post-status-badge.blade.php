@@ -11,4 +11,4 @@
         };
 @endphp
 
-<span {{ $attributes->class(['badge', $badge['class']]) }} @if ($badge['title']) title="{{ $badge['title'] }}" @endif>{{ $badge['label'] }}</span>
+<span {{ $attributes->class(['badge', 'post-status-badge', $badge['class']]) }} @if ($badge['title']) title="{{ $badge['title'] }}" @endif>{{ $badge['label'] }}</span>

@@ -217,3 +217,10 @@
     font-size: 0.85rem;
     color: var(--bs-secondary-color);
 }
+
+/* Every status badge is as wide as the longest label ("Restricted"), so they line up. */
+.post-status-badge {
+    display: inline-block;
+    min-width: 6.25rem;
+    text-align: center;
+}
