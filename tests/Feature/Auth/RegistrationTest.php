@@ -41,7 +41,7 @@ class RegistrationTest extends TestCase
     {
         $this->actingAs(User::factory()->create())
             ->get(route('register'))
-            ->assertRedirect(route('home'));
+            ->assertRedirect(route('dashboard'));
     }
 
     public function test_new_user_is_created_signed_in_and_welcomed(): void
@@ -50,7 +50,7 @@ class RegistrationTest extends TestCase
 
         $response = $this->post(route('register.store'), $this->validInput());
 
-        $response->assertRedirect(route('home'))
+        $response->assertRedirect(route('dashboard'))
             ->assertSessionHas('success', "Welcome to Muallam, Irfan Farooq! We've sent a verification link to irfan@example.com.");
 
         $user = User::where('email', 'irfan@example.com')->sole();

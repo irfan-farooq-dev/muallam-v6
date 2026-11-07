@@ -69,7 +69,7 @@ class EmailVerificationTest extends TestCase
     {
         $this->actingAs(User::factory()->create())
             ->get(route('verification.notice'))
-            ->assertRedirect(route('home'));
+            ->assertRedirect(route('dashboard'));
     }
 
     public function test_guest_is_asked_to_sign_in_before_verifying(): void
@@ -87,7 +87,7 @@ class EmailVerificationTest extends TestCase
         $user = User::factory()->unverified()->create();
 
         $this->actingAs($user)->get($this->verificationUrl($user))
-            ->assertRedirect(route('home'))
+            ->assertRedirect(route('dashboard'))
             ->assertSessionHas('success', 'Thanks! Your email address is now verified.');
 
         $this->assertTrue($user->fresh()->hasVerifiedEmail());
@@ -99,7 +99,7 @@ class EmailVerificationTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user)->get($this->verificationUrl($user))
-            ->assertRedirect(route('home'))
+            ->assertRedirect(route('dashboard'))
             ->assertSessionHas('info', 'Your email address is already verified.');
     }
 
@@ -159,7 +159,7 @@ class EmailVerificationTest extends TestCase
         Notification::fake();
         $user = User::factory()->create();
 
-        $this->actingAs($user)->post(route('verification.send'))->assertRedirect(route('home'));
+        $this->actingAs($user)->post(route('verification.send'))->assertRedirect(route('dashboard'));
 
         Notification::assertNothingSent();
     }

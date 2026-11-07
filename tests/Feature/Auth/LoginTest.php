@@ -44,7 +44,7 @@ class LoginTest extends TestCase
     {
         $this->actingAs($this->createUser())
             ->get(route('login'))
-            ->assertRedirect(route('home'));
+            ->assertRedirect(route('dashboard'));
     }
 
     public function test_user_can_sign_in_with_correct_credentials(): void
@@ -52,7 +52,7 @@ class LoginTest extends TestCase
         $user = $this->createUser();
 
         $this->post(route('login.store'), ['email' => 'irfan@example.com', 'password' => 'secret-pass-1'])
-            ->assertRedirect(route('home'))
+            ->assertRedirect(route('dashboard'))
             ->assertSessionHas('success', 'Welcome back, Irfan Farooq!');
 
         $this->assertAuthenticatedAs($user);

@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'home')->name('home');
@@ -34,6 +35,8 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::post('logout', LogoutController::class)->name('logout');
+
+    Route::get('dashboard', DashboardController::class)->name('dashboard');
 
     Route::get('email/verify', [EmailVerificationController::class, 'notice'])->name('verification.notice');
     Route::get('email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])

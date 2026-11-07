@@ -16,7 +16,7 @@ class EmailVerificationController extends Controller
     public function notice(Request $request): RedirectResponse|View
     {
         if ($request->user()->hasVerifiedEmail()) {
-            return redirect()->route('home');
+            return redirect()->route('dashboard');
         }
 
         return view('auth.verify-email');
@@ -28,18 +28,18 @@ class EmailVerificationController extends Controller
     public function verify(EmailVerificationRequest $request): RedirectResponse
     {
         if ($request->user()->hasVerifiedEmail()) {
-            return redirect()->route('home')->with('info', 'Your email address is already verified.');
+            return redirect()->route('dashboard')->with('info', 'Your email address is already verified.');
         }
 
         $request->fulfill();
 
-        return redirect()->route('home')->with('success', 'Thanks! Your email address is now verified.');
+        return redirect()->route('dashboard')->with('success', 'Thanks! Your email address is now verified.');
     }
 
     public function send(Request $request): RedirectResponse
     {
         if ($request->user()->hasVerifiedEmail()) {
-            return redirect()->route('home')->with('info', 'Your email address is already verified.');
+            return redirect()->route('dashboard')->with('info', 'Your email address is already verified.');
         }
 
         $request->user()->sendEmailVerificationNotification();

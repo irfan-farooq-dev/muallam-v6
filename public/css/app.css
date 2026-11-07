@@ -157,3 +157,63 @@
     font-family: var(--nav-font);
     font-size: 0.9rem;
 }
+
+/* Member area */
+.member-area {
+    padding: 32px 0 64px;
+}
+
+.member-nav-links {
+    flex-direction: column;
+    gap: 2px;
+}
+
+.member-nav-links .nav-link {
+    color: var(--default-color);
+    font-family: var(--nav-font);
+    font-size: 0.95rem;
+    border-radius: 8px;
+}
+
+.member-nav-links .nav-link:hover {
+    background: #f1f3f5;
+}
+
+.member-nav-links .nav-link.active {
+    background: var(--accent-color);
+    color: var(--contrast-color);
+}
+
+/* Below lg the sidebar becomes a horizontal, scrollable row of tabs. */
+@media (max-width: 991.98px) {
+    .member-nav-links {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        border-bottom: 1px solid #e9ecef;
+        padding-bottom: 8px;
+    }
+
+    .member-nav-links .nav-link {
+        white-space: nowrap;
+    }
+}
+
+.stat-card {
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    height: 100%;
+}
+
+.stat-card .stat-value {
+    font-family: var(--nav-font);
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.stat-card .stat-label {
+    font-family: var(--nav-font);
+    font-size: 0.85rem;
+    color: var(--bs-secondary-color);
+}

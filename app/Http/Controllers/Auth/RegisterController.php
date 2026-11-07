@@ -33,7 +33,7 @@ class RegisterController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
-        return redirect()->route('home')
+        return redirect()->route('dashboard')
             ->with('success', "Welcome to Muallam, {$user->name}! We've sent a verification link to {$user->email}.");
     }
 

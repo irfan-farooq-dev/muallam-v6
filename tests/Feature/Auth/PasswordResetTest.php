@@ -56,8 +56,8 @@ class PasswordResetTest extends TestCase
     {
         $user = $this->createUser();
 
-        $this->actingAs($user)->get(route('password.request'))->assertRedirect(route('home'));
-        $this->actingAs($user)->get(route('password.reset', ['token' => 'abc']))->assertRedirect(route('home'));
+        $this->actingAs($user)->get(route('password.request'))->assertRedirect(route('dashboard'));
+        $this->actingAs($user)->get(route('password.reset', ['token' => 'abc']))->assertRedirect(route('dashboard'));
     }
 
     public function test_reset_link_is_emailed_to_a_registered_address(): void
