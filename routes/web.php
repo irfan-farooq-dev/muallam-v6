@@ -148,3 +148,11 @@ Route::post('posts/{post}/access', [PostAccessController::class, 'unlock'])->mid
 
 // Registered last so fixed addresses such as /posts/create are matched first.
 Route::get('posts/{post}', [PostController::class, 'show'])->name('posts.show');
+
+/*
+ * Addresses from the old muallam.com, sent permanently to their new home.
+ */
+Route::permanentRedirect('blogs', '/');
+Route::permanentRedirect('blogs/{slug}', '/posts/{slug}')->where('slug', '[a-z0-9-]+');
+Route::permanentRedirect('signup', '/register');
+Route::permanentRedirect('{slug}/blogs', '/users/{slug}/posts')->where('slug', '[a-z0-9-]+');

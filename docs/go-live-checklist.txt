@@ -4,112 +4,169 @@ Everything to do when deploying muallam.com, plus decisions and features left
 for later. (Same content as docs/go-live-checklist.html.)
 
 
-1. SERVER REQUIREMENTS
-----------------------
-[ ] PHP 8.3 or newer (developed on 8.4) with extensions: gd WITH WEBP SUPPORT
-    (all image resizing uses it), pdo_mysql, mbstring, fileinfo, openssl,
-    tokenizer, xml, ctype, bcmath. exif is optional (straightens sideways
-    phone photos).
-[ ] MySQL 8.x or newer (developed on 9.7), database in utf8mb4 /
-    utf8mb4_0900_ai_ci.
-[ ] Web server document root points to the public/ folder, not the project root.
-[ ] PHP upload limits: upload_max_filesize >= 6M and post_max_size >= 10M
-    (images up to 5 MB, featured image up to 4 MB, sent with the post).
-[ ] storage/ and bootstrap/cache/ writable by the web server user.
-[ ] HTTPS certificate installed; http:// and www. redirect to
-    https://muallam.com.
-[ ] No Node/npm needed (no build step). Composer is needed.
+1. HOSTING (CPANEL)
+-------------------
+muallam.com is on cPanel shared hosting without a terminal: PHP 8.4 and
+MariaDB 10.11 (seen in the old database export). Everything below is done
+from cPanel, File Manager and phpMyAdmin. CPANELUSER = your cPanel username,
+so the home folder is /home/CPANELUSER.
+
+Layout: the app goes in /home/CPANELUSER/muallam (outside the web root, so
+.env and the code can never be downloaded); only the public files go in
+/home/CPANELUSER/public_html.
+
+[ ] Select PHP Version (or MultiPHP Manager): PHP 8.4 for muallam.com, with
+    extensions gd WITH WEBP SUPPORT (all image resizing uses it), pdo_mysql,
+    mbstring, fileinfo, openssl, tokenizer, xml, ctype, bcmath; optionally
+    exif (straightens sideways phone photos).
+[ ] PHP options: upload_max_filesize >= 6M, post_max_size >= 10M.
+[ ] MySQL Databases: create a new database (e.g. CPANELUSER_muallam) and a
+    user with all privileges on it. Also add that user to the OLD database
+    (so the old members can be copied), or put the old database's own login
+    in LEGACY_DB_USERNAME / LEGACY_DB_PASSWORD. Keep the old database until
+    the import has run.
+[ ] SSL/TLS Status: certificate installed (AutoSSL). http:// and www. end on
+    https://muallam.com (Domains > Force HTTPS Redirect).
+[ ] Back up and clear the old site: download a copy of public_html and the
+    old app folder, then empty public_html (keep .well-known and cgi-bin if
+    present).
 
 
 2. PRODUCTION .env
 ------------------
-Copy .env.example to .env on the server and set at least:
+On your Mac, make the app key (never reuse the local one):
+
+    php artisan key:generate --show
+
+After the first upload (section 3) create /home/CPANELUSER/muallam/.env in
+File Manager with:
 
     APP_NAME=Muallam
     APP_ENV=production          # also switches robots.txt to "welcome crawlers"
+    APP_KEY=base64:...          # from key:generate --show
     APP_DEBUG=false             # never true on the live site
     APP_URL=https://muallam.com # used in emails, sitemap, share links
     APP_TIMEZONE=UTC            # see "Decisions still open"
+    LOG_LEVEL=warning
 
     DB_CONNECTION=mysql
-    DB_HOST=...
+    DB_HOST=localhost
     DB_PORT=3306
-    DB_DATABASE=...
-    DB_USERNAME=...
+    DB_DATABASE=CPANELUSER_muallam
+    DB_USERNAME=CPANELUSER_...
     DB_PASSWORD=...
+
+    # Old site's database: its members are copied on the first deploy.
+    # Remove these lines afterwards.
+    LEGACY_DB_DATABASE=CPANELUSER_...   # name of the OLD database
+    # LEGACY_DB_USERNAME=...            # only if the user above has no access
+    # LEGACY_DB_PASSWORD=...
+
+    # public_html is not inside the app folder, so the image link needs the full path.
+    PUBLIC_STORAGE_LINK=/home/CPANELUSER/public_html/storage
 
     SESSION_DRIVER=database
     SESSION_SECURE_COOKIE=true
-    CACHE_STORE=database
+    CACHE_STORE=file            # file, not database: the scheduler must work before the tables exist
     QUEUE_CONNECTION=database
 
     MAIL_MAILER=smtp
-    MAIL_HOST=...
-    MAIL_PORT=587
-    MAIL_USERNAME=...
+    MAIL_SCHEME=smtps
+    MAIL_HOST=mail.muallam.com
+    MAIL_PORT=465
+    MAIL_USERNAME=no-reply@muallam.com
     MAIL_PASSWORD=...
     MAIL_FROM_ADDRESS="no-reply@muallam.com"
     MAIL_FROM_NAME="Muallam"
 
-[ ] Generate a new key on the server: php artisan key:generate
-    (never reuse the local key). Keep a safe copy: if it is lost, sessions and
-    remember-me cookies stop working.
-[ ] Check APP_DEBUG=false and APP_ENV=production before opening the site.
+[ ] .env created with a new APP_KEY. Keep a safe copy of the whole file
+    outside the server: if the key is lost, sessions and remember-me cookies
+    stop working.
+[ ] APP_DEBUG=false, APP_ENV=production and CACHE_STORE=file double-checked.
+[ ] Changing .env later: settings are cached, so they only apply after a
+    deploy. Without a new upload, edit muallam/RELEASE in File Manager (add
+    "-1" to the end of the line); the scheduler redeploys within a minute.
 
 
-3. DEPLOYMENT COMMANDS
-----------------------
-Run from the project folder on the server, in this order:
+3. UPLOAD AND DEPLOY
+--------------------
+Build the upload zip on your Mac from committed code (it includes the
+Composer packages, so the server needs no Composer or terminal):
 
-    composer install --no-dev --optimize-autoloader
-    php artisan key:generate              # first deploy only
-    php artisan migrate --force
-    php artisan db:seed --class=CategorySeeder --force
-    php artisan storage:link              # makes uploaded images reachable
-    php artisan optimize                  # caches config, routes, views, events
+    php artisan site:package
+
+It creates muallam-deploy/muallam-<commit>-<time>.zip next to the project,
+holding two folders: muallam/ (the app) and public_html/ (the public files,
+already pointed at ../muallam). Uncommitted changes are not included.
+
+[ ] File Manager: upload the zip to /home/CPANELUSER (the home folder, not
+    inside public_html) and Extract it there. Then delete the zip.
+[ ] First time only: create muallam/.env (section 2) and add the cron job
+    (section 4).
+[ ] Within a minute the scheduler runs site:deploy: database tables,
+    categories, old members (while LEGACY_DB_DATABASE is set), the
+    public_html/storage image link and the caches. Read the result in
+    muallam/storage/logs/deploy.log; it must end with "Release ... deployed."
+    A failed step is retried every minute until fixed.
+[ ] After the first deploy: check the log lists the imported members, then
+    remove the LEGACY_DB_... lines from .env.
+[ ] Later updates: commit, run php artisan site:package, upload and extract
+    the new zip over the old folders (Overwrite). The new RELEASE file makes
+    the scheduler deploy it. Keep the previous zip: extracting it again rolls
+    back the code (database changes are not undone).
 
 !! NEVER run plain "php artisan db:seed" or "migrate:fresh --seed" on the live
 !! site. The default seeder creates demo users (password "password") and fake
-!! posts. Only CategorySeeder is safe; it can be run again any time and never
-!! deletes anything.
-
-[ ] After every later deploy: composer install --no-dev --optimize-autoloader,
-    php artisan migrate --force, php artisan optimize.
-[ ] If you change .env later, run php artisan optimize again (config is cached).
+!! posts. site:deploy only runs the safe CategorySeeder, which never deletes
+!! anything.
 
 
 4. SCHEDULER (CRON)
 -------------------
-One cron line runs Laravel's scheduler every minute. Today it runs
-posts:prune-images daily at midnight (deletes editor uploads never saved into
-a post, older than 24 hours).
+cPanel > Cron Jobs > Add New Cron Job, "Once Per Minute" (* * * * *), command:
 
-    * * * * * cd /path/to/muallam && php artisan schedule:run >> /dev/null 2>&1
+    cd /home/CPANELUSER/muallam && /opt/alt/php84/usr/bin/php artisan schedule:run >> /dev/null 2>&1
 
-[ ] Cron line added (replace /path/to/muallam).
-[ ] Check: php artisan schedule:list shows posts:prune-images.
+It finishes deploys (every minute, only when a new release was uploaded) and
+runs posts:prune-images daily at midnight (deletes editor uploads never saved
+into a post). The PHP path depends on the host: /opt/alt/php84/usr/bin/php on
+CloudLinux (this host's MariaDB says "cll-lve", so likely), otherwise
+/usr/local/bin/ea-php84 or /usr/local/bin/php.
+
+[ ] Cron job added with your username and the right PHP path.
+[ ] It works: muallam/storage/logs/deploy.log appears within a minute or two.
+    If not, temporarily replace ">> /dev/null 2>&1" with
+    ">> /home/CPANELUSER/cron.log 2>&1" to see the error (usually a wrong PHP
+    path or a PHP older than 8.3), and put it back afterwards.
 
 
-5. FIRST ADMIN ACCOUNT
-----------------------
-There is no admin sign-up screen (on purpose). Register normally on the live
-site, verify the email, then promote yourself once:
+5. MEMBERS AND THE FIRST ADMIN
+------------------------------
+The first deploy copies the old site's members. They keep their passwords
+(old addresses such as /abu-hashim/blogs redirect to the new author pages).
+Skipped on purpose: one scam account and five bot sign-ups with random-letter
+names. No old email address was ever verified, so members confirm theirs from
+the dashboard before they can write.
 
-    php artisan tinker --execute 'App\Models\User::where("email", "you@example.com")->update(["role" => "admin"]);'
+The old admin@muallam.com ("Admin User") becomes an admin with the address
+/users/admin-user.
 
-[ ] Admin account created and promoted.
-[ ] Open https://muallam.com/admin and check the dashboard loads. Further
-    admins can then be made from Admin > Users (no tinker needed).
+[ ] Sign in as admin@muallam.com with its old password (or use "Forgot
+    password" once email works), and open https://muallam.com/admin
+[ ] Make your own account an admin from Admin > Users. (No admin can sign
+    in? phpMyAdmin > SQL:
+    UPDATE users SET role = 'admin' WHERE email = 'you@example.com';)
 
 
 6. EMAIL DELIVERY
 -----------------
 The site sends: email verification, password reset, restricted-post invites.
 
-[ ] SMTP provider set up (host's mail, or Mailgun / Postmark / Amazon SES /
-    Brevo).
-[ ] DNS records for muallam.com: SPF, DKIM and DMARC, so emails do not land
-    in spam.
+[ ] cPanel > Email Accounts: create no-reply@muallam.com and use its
+    password in MAIL_PASSWORD. Connect Devices shows the SMTP host and port
+    (usually mail.muallam.com, 465 SSL).
+[ ] cPanel > Email Deliverability: SPF and DKIM valid (Repair if not). Add a
+    DMARC record too, so emails do not land in spam.
 [ ] Send yourself one of each: sign up (verification), "Forgot password"
     (reset), invite yourself to a restricted post from another account
     (invite). Check links open https://muallam.com/...
@@ -150,14 +207,16 @@ The site sends: email verification, password reset, restricted-post invites.
 
 9. BACKUPS AND HOUSEKEEPING
 ---------------------------
-[ ] Daily database backup (users, posts, comments, likes, invites).
-[ ] Daily backup of storage/app/public/ - all uploaded avatars, featured
+[ ] Daily database backup (users, posts, comments, likes, invites):
+    cPanel > Backup, or JetBackup if the host offers it.
+[ ] Daily backup of muallam/storage/app/public/ - all uploaded avatars, featured
     images and post images live there. The database alone is not enough.
 [ ] Keep .env (with APP_KEY) in a safe place outside the server.
-[ ] Watch storage/logs/laravel.log for errors in the first days.
+[ ] Watch muallam/storage/logs/laravel.log for errors in the first days.
 [ ] Optional tidy-up: delete AGENTS.md if you do not use other AI tools; trim
-    unused Bootstrap/template files in public/frontend and public/admin once
-    the admin panel is built.
+    unused Bootstrap/template files in public/frontend and public/admin to
+    make the upload smaller. Once the import has run, the old database can be
+    deleted (keep a downloaded copy).
 
 
 10. DECISIONS STILL OPEN

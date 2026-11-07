@@ -74,7 +74,8 @@ return [
     */
 
     'links' => [
-        public_path('storage') => storage_path('app/public'),
+        // On cPanel the web root (public_html) is outside the app folder, so its path is set in .env.
+        env('PUBLIC_STORAGE_LINK', public_path('storage')) => storage_path('app/public'),
     ],
 
 ];
