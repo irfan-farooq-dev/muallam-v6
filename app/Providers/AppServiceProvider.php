@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -23,6 +25,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        VerifyEmail::toMailUsing(fn (object $notifiable, string $url): MailMessage => (new MailMessage)
+            ->subject('Verify your Muallam email address')
+            ->greeting("Hi {$notifiable->name},")
+            ->line('Thanks for joining Muallam. Please confirm this is your email address by clicking the button below.')
+            ->action('Verify email address', $url)
+            ->line('This link expires in '.config('auth.verification.expire', 60).' minutes.')
+            ->line("If you didn't create a Muallam account, you can ignore this email."));
+
         Password::defaults(fn (): Password => Password::min(8)->max(72));
 
         RateLimiter::for('register', fn (Request $request): Limit => Limit::perMinute(10)->by($request->ip()));

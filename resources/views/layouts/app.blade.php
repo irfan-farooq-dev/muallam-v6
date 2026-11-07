@@ -27,6 +27,7 @@
 <body class="@yield('body_class')">
 
     @include('partials.header')
+    @include('partials.verify-email-banner')
 
     <main class="main">
         <div class="container">

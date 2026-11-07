@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegisterController;
@@ -19,4 +20,14 @@ Route::middleware('guest')->group(function () {
         ->name('login.store');
 });
 
-Route::post('logout', LogoutController::class)->middleware('auth')->name('logout');
+Route::middleware('auth')->group(function () {
+    Route::post('logout', LogoutController::class)->name('logout');
+
+    Route::get('email/verify', [EmailVerificationController::class, 'notice'])->name('verification.notice');
+    Route::get('email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
+        ->middleware(['signed', 'throttle:6,1'])
+        ->name('verification.verify');
+    Route::post('email/verification-notification', [EmailVerificationController::class, 'send'])
+        ->middleware('throttle:6,1')
+        ->name('verification.send');
+});

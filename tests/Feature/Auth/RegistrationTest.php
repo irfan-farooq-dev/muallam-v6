@@ -51,7 +51,7 @@ class RegistrationTest extends TestCase
         $response = $this->post(route('register.store'), $this->validInput());
 
         $response->assertRedirect(route('home'))
-            ->assertSessionHas('success', 'Welcome to Muallam, Irfan Farooq! Your account is ready.');
+            ->assertSessionHas('success', "Welcome to Muallam, Irfan Farooq! We've sent a verification link to irfan@example.com.");
 
         $user = User::where('email', 'irfan@example.com')->sole();
         $this->assertAuthenticatedAs($user);

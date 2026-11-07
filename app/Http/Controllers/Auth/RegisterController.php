@@ -34,7 +34,7 @@ class RegisterController extends Controller
         $request->session()->regenerate();
 
         return redirect()->route('home')
-            ->with('success', "Welcome to Muallam, {$user->name}! Your account is ready.");
+            ->with('success', "Welcome to Muallam, {$user->name}! We've sent a verification link to {$user->email}.");
     }
 
     /**

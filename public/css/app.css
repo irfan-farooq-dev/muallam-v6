@@ -148,3 +148,12 @@
 .form-control.has-toggle.is-invalid {
     background-position: right 2.75rem center;
 }
+
+/* Unverified email reminder under the header */
+.verify-email-banner {
+    background: #fff8e1;
+    border-bottom: 1px solid #f3e2a9;
+    color: #5c4a12;
+    font-family: var(--nav-font);
+    font-size: 0.9rem;
+}
