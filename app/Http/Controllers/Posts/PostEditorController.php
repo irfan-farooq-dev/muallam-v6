@@ -7,11 +7,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Posts\SavePostRequest;
 use App\Models\Category;
 use App\Models\Post;
+use App\Services\AdminEditTracker;
 use App\Services\FeaturedImageProcessor;
 use App\Services\PostImageStore;
 use App\Services\PostSlugGenerator;
 use Carbon\CarbonInterface;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\View\View;
 
@@ -20,6 +22,7 @@ class PostEditorController extends Controller
     public function __construct(
         private FeaturedImageProcessor $featuredImages,
         private PostImageStore $bodyImages,
+        private AdminEditTracker $adminEdits,
     ) {}
 
     public function create(): View
@@ -51,6 +54,7 @@ class PostEditorController extends Controller
     public function update(SavePostRequest $request, Post $post): RedirectResponse
     {
         $wasLive = $post->status === PostStatus::Published && ! $post->isScheduled();
+        $before = $this->adminEdits->snapshot($post);
         $post->fill($this->postAttributes($request, $post));
 
         if ($request->boolean('remove_featured_image') || $request->hasFile('featured_image')) {
@@ -64,6 +68,7 @@ class PostEditorController extends Controller
 
         $post->save();
         $this->bodyImages->syncWithBody($post, $request->user());
+        $this->adminEdits->recordSave($post, $request->user(), $before);
 
         $message = $wasLive && $post->status === PostStatus::Draft
             ? 'Post unpublished. It is a draft again, so only you can see it.'
@@ -72,19 +77,22 @@ class PostEditorController extends Controller
         return redirect()->route('posts.edit', $post)->with('success', $message);
     }
 
-    public function destroy(Post $post): RedirectResponse
+    public function destroy(Request $request, Post $post): RedirectResponse
     {
         $this->featuredImages->delete($post->featured_image);
         $this->bodyImages->deleteAllFor($post);
         $post->delete();
 
-        return redirect()->route('posts.mine')->with('success', "\"{$post->title}\" was deleted.");
+        $backTo = $request->user()->is($post->user) ? 'posts.mine' : 'admin.posts.index';
+
+        return redirect()->route($backTo)->with('success', "\"{$post->title}\" was deleted.");
     }
 
     private function form(Post $post): View
     {
         return view('member.posts.form', [
             'post' => $post,
+            'pendingAdminEdit' => $post->exists ? $post->pendingAdminEdit()->with('editor:id,name')->first() : null,
             'shares' => $post->exists ? $post->shares()->latest()->get() : collect(),
             'categories' => Category::query()->active()->get(['id', 'name']),
             'defaultCategoryId' => Category::default()?->id,

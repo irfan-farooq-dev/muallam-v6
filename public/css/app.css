@@ -366,6 +366,52 @@ a:hover {
     font-size: 0.9rem;
 }
 
+/* Admin changes (word-by-word highlights for the author) */
+.diff-added {
+    background: #d1e7dd;
+    color: #0a3622;
+    text-decoration: none;
+    border-radius: 3px;
+    padding: 0 2px;
+}
+
+.diff-removed {
+    background: #f8d7da;
+    color: #58151c;
+    text-decoration: line-through;
+    border-radius: 3px;
+    padding: 0 2px;
+}
+
+.post-diff .diff-block {
+    margin-bottom: 0.9rem;
+    line-height: 1.7;
+}
+
+.post-diff .diff-block-same {
+    color: #6c757d;
+}
+
+.post-diff .diff-block-changed,
+.post-diff .diff-block-added,
+.post-diff .diff-block-removed {
+    border-left: 3px solid var(--accent-color);
+    padding-left: 0.75rem;
+}
+
+.post-diff .diff-heading {
+    font-weight: 600;
+    font-size: 1.15rem;
+}
+
+.post-diff .diff-list-item::before {
+    content: "\2022  ";
+}
+
+.post-diff .diff-quote {
+    font-style: italic;
+}
+
 /* Full post */
 .post-article-category {
     font-family: var(--nav-font);

@@ -11,6 +11,18 @@
 @section('member_content')
     <p class="text-secondary mb-4">Hi {{ auth()->user()->name }}, here's how your writing is doing.</p>
 
+    @if ($adminEditedPosts->isNotEmpty())
+        <div class="alert alert-info" data-admin-edit-notice>
+            <i class="bi bi-person-gear me-1"></i>
+            An admin edited {{ trans_choice('{1} one of your posts|[2,*] :count of your posts', $adminEditedPosts->count()) }}. See what changed:
+            <ul class="mb-0 mt-1">
+                @foreach ($adminEditedPosts as $editedPost)
+                    <li><a href="{{ route('posts.changes', $editedPost) }}">{{ $editedPost->title }}</a></li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     @php
         $postCards = [
             ['label' => 'Published', 'value' => $stats['published'], 'icon' => 'bi-globe2'],

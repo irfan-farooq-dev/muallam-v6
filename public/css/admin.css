@@ -74,6 +74,13 @@ h1, h2, h3, h4, h5, h6,
     text-align: center;
 }
 
+/* Sneat's Bootstrap build has no text-bg-* helpers; the shared status badge uses them. */
+.post-status-badge.text-bg-success { background-color: #198754; color: #fff; }
+.post-status-badge.text-bg-secondary { background-color: #6c757d; color: #fff; }
+.post-status-badge.text-bg-dark { background-color: #252525; color: #fff; }
+.post-status-badge.text-bg-info { background-color: #0dcaf0; color: #000; }
+.post-status-badge.text-bg-warning { background-color: #ffc107; color: #000; }
+
 .admin-list .list-group-item {
     border-left: 0;
     border-right: 0;

@@ -55,6 +55,17 @@
         </div>
     @endif
 
+    @auth
+        @if (auth()->user()->can('reviewAdminEdits', $post) && $post->pendingAdminEdit()->exists())
+            <div class="preview-banner" data-admin-edit-notice>
+                <div class="container d-flex flex-wrap align-items-center justify-content-between gap-2 py-2">
+                    <span><i class="bi bi-person-gear me-1"></i><strong>An admin edited this post.</strong> Only you see this note; readers see the post as it is now.</span>
+                    <a href="{{ route('posts.changes', $post) }}" class="btn btn-sm btn-outline-accent">See what changed</a>
+                </div>
+            </div>
+        @endif
+    @endauth
+
     <section class="section">
         <div class="container">
             <div class="row justify-content-center">

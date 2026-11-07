@@ -7,7 +7,11 @@
 @endpush
 
 @section('page_actions')
-    <a href="{{ route('posts.mine') }}" class="btn btn-link text-secondary"><i class="bi bi-arrow-left me-1"></i>My posts</a>
+    @if ($post->exists && ! auth()->user()->is($post->user) && Route::has('admin.posts.index'))
+        <a href="{{ route('admin.posts.index') }}" class="btn btn-link text-secondary"><i class="bi bi-arrow-left me-1"></i>Admin: posts</a>
+    @else
+        <a href="{{ route('posts.mine') }}" class="btn btn-link text-secondary"><i class="bi bi-arrow-left me-1"></i>My posts</a>
+    @endif
 @endsection
 
 @section('member_content')
@@ -40,6 +44,28 @@
                     <div class="small mt-1">{{ $message }}</div>
                 @enderror
             @endforeach
+        </div>
+    @endif
+
+    @if ($pendingAdminEdit && auth()->user()->can('reviewAdminEdits', $post))
+        <div class="alert alert-info d-flex flex-wrap align-items-center justify-content-between gap-2" data-admin-edit-notice>
+            <span>
+                <i class="bi bi-person-gear me-1"></i>
+                <strong>{{ $pendingAdminEdit->editor?->name ?? 'An admin' }}</strong> edited this post {{ $pendingAdminEdit->updated_at->diffForHumans() }}.
+                Saving it yourself marks the changes as reviewed.
+            </span>
+            <a href="{{ route('posts.changes', $post) }}" class="btn btn-sm btn-accent">See what changed</a>
+        </div>
+    @elseif ($post->exists && ! auth()->user()->is($post->user))
+        <div class="alert alert-warning d-flex flex-wrap align-items-center justify-content-between gap-2" data-admin-edit-notice>
+            <span>
+                <i class="bi bi-shield-exclamation me-1"></i>
+                You are editing <strong>{{ $post->user->name }}</strong>'s post as an admin.
+                Changes to the title, summary and text are highlighted for the author (readers only see the plain post).
+            </span>
+            @if ($pendingAdminEdit)
+                <a href="{{ route('posts.changes', $post) }}" class="btn btn-sm btn-outline-secondary">Changes so far</a>
+            @endif
         </div>
     @endif
 

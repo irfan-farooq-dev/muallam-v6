@@ -145,6 +145,25 @@ Unique `(post_id, email)`. Revoking access deletes the row.
 
 Restricted flow: invite email link `/posts/{slug}/access?token=…` → token matched by hash → visitor enters the post password → session key `unlocked_post_{id}` grants access. No account needed.
 
+## post_admin_edits
+
+The author's version of a post from just before an admin changed its words, so the author can see what changed (word-by-word highlights, shown only to the author and admins). Readers always see the plain current post.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | bigint PK | |
+| post_id | FK → posts, cascade on delete | |
+| editor_id | FK → users, null, null on delete | the admin who last changed it |
+| previous_title | varchar(255) | |
+| previous_summary | text, null | |
+| previous_body | longtext | |
+| resolved_at | timestamp, null | set when the author marks it reviewed or saves the post |
+| created_at, updated_at | timestamps | updated_at = latest admin change |
+
+Indexes: `(post_id, resolved_at)`.
+
+Rules: at most one open row per post. Further admin edits keep the first row (so the comparison stays against the author's own version). Only title, summary and body changes open a row.
+
 ## Laravel default tables
 
 `password_reset_tokens`, `sessions`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`.
@@ -167,4 +186,5 @@ users 1─* comments *─1 posts
 comments 1─* comments (replies via parent_id)
 posts 1─* post_shares
 posts 1─* post_images *─1 users (uploader)
+posts 1─* post_admin_edits *─1 users (editor)
 ```

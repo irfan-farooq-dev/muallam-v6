@@ -35,6 +35,7 @@ class MyPostsController extends Controller
 
         $posts = $user->posts()
             ->with('category:id,name')
+            ->withExists(['adminEdits as has_pending_admin_edit' => fn (Builder $query) => $query->whereNull('resolved_at')])
             ->tap(fn (Builder $query) => $this->applyFilter($query, $filter))
             ->when($search !== '', fn (Builder $query) => $query->where('title', 'like', '%'.addcslashes($search, '%_\\').'%'))
             ->latest('updated_at')

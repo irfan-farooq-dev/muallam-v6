@@ -49,6 +49,14 @@ class PostPolicy
         return $this->ownsOrAdministers($user, $post);
     }
 
+    /**
+     * Only the author marks an admin's changes to their post as reviewed.
+     */
+    public function reviewAdminEdits(User $user, Post $post): bool
+    {
+        return $post->user_id === $user->getKey();
+    }
+
     private function ownsOrAdministers(User $user, Post $post): bool
     {
         return $post->user_id === $user->getKey() || $user->isAdmin();

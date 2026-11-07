@@ -52,6 +52,11 @@
                             @endif
                         </small>
                     </div>
+                    @if ($post->has_pending_admin_edit)
+                        <a href="{{ route('posts.changes', $post) }}" class="badge rounded-pill text-bg-info text-decoration-none" title="An admin changed this post. See what changed.">
+                            <i class="bi bi-person-gear me-1"></i>Edited by admin
+                        </a>
+                    @endif
                     <x-post-status-badge :post="$post" />
                     <div class="d-flex gap-1">
                         <a href="{{ route('posts.show', $post) }}" class="btn btn-sm btn-outline-secondary" aria-label="View {{ $post->title }}" title="View" target="_blank"><i class="bi bi-eye"></i></a>

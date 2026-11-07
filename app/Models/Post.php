@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Storage;
 
 #[Fillable([
@@ -109,6 +110,24 @@ class Post extends Model
     public function shares(): HasMany
     {
         return $this->hasMany(PostShare::class);
+    }
+
+    /**
+     * @return HasMany<PostAdminEdit, $this>
+     */
+    public function adminEdits(): HasMany
+    {
+        return $this->hasMany(PostAdminEdit::class);
+    }
+
+    /**
+     * Admin changes the author has not reviewed yet (at most one open record per post).
+     *
+     * @return HasOne<PostAdminEdit, $this>
+     */
+    public function pendingAdminEdit(): HasOne
+    {
+        return $this->hasOne(PostAdminEdit::class)->whereNull('resolved_at');
     }
 
     /**

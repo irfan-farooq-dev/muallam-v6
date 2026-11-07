@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\PostStatus;
 use App\Models\Post;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -19,6 +20,10 @@ class DashboardController extends Controller
 
         return view('member.dashboard', [
             'stats' => $this->postStats($user),
+            'adminEditedPosts' => $user->posts()
+                ->whereHas('adminEdits', fn (Builder $query) => $query->whereNull('resolved_at'))
+                ->latest('updated_at')
+                ->get(['id', 'title', 'slug']),
             'recentPosts' => $user->posts()
                 ->with('category:id,name')
                 ->latest('updated_at')

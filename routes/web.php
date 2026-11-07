@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\PostController as AdminPostController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Auth\LoginController;
@@ -16,6 +17,7 @@ use App\Http\Controllers\Posts\CommentController;
 use App\Http\Controllers\Posts\LikedPostsController;
 use App\Http\Controllers\Posts\MyPostsController;
 use App\Http\Controllers\Posts\PostAccessController;
+use App\Http\Controllers\Posts\PostChangesController;
 use App\Http\Controllers\Posts\PostController;
 use App\Http\Controllers\Posts\PostEditorController;
 use App\Http\Controllers\Posts\PostImageUploadController;
@@ -96,6 +98,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('posts/{post}/edit', [PostEditorController::class, 'edit'])->can('update', 'post')->name('posts.edit');
     Route::put('posts/{post}', [PostEditorController::class, 'update'])->can('update', 'post')->name('posts.update');
     Route::delete('posts/{post}', [PostEditorController::class, 'destroy'])->can('delete', 'post')->name('posts.destroy');
+    Route::get('posts/{post}/changes', [PostChangesController::class, 'show'])->can('update', 'post')->name('posts.changes');
+    Route::post('posts/{post}/changes/reviewed', [PostChangesController::class, 'markReviewed'])
+        ->can('reviewAdminEdits', 'post')->name('posts.changes.reviewed');
 
     Route::post('posts/{post}/shares', [PostShareController::class, 'store'])
         ->can('update', 'post')->middleware('throttle:10,1')->name('posts.shares.store');
@@ -127,6 +132,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'admin']
     Route::resource('users', AdminUserController::class)->only(['index', 'edit', 'update', 'destroy']);
     Route::resource('categories', AdminCategoryController::class)->except(['show']);
     Route::post('categories/{category}/move', [AdminCategoryController::class, 'move'])->name('categories.move');
+    Route::get('posts', [AdminPostController::class, 'index'])->name('posts.index');
+    Route::post('posts/{post}/unpublish', [AdminPostController::class, 'unpublish'])->name('posts.unpublish');
+    Route::delete('posts/{post}', [AdminPostController::class, 'destroy'])->name('posts.destroy');
 });
 
 // Invited readers of restricted posts: invite link, then the post password.
