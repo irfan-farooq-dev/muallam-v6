@@ -12,6 +12,8 @@ return [
     |
     */
 
+    'slug_change_cooldown_days' => 30,
+
     'reserved_slugs' => [
         'admin', 'administrator', 'api', 'auth', 'bio', 'blog', 'blogs', 'categories',
         'category', 'contact', 'dashboard', 'edit', 'email', 'help', 'home', 'login',

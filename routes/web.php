@@ -10,9 +10,12 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Profile\PasswordController;
 use App\Http\Controllers\Profile\ProfileController;
 use App\Http\Controllers\Profile\ProfilePhotoController;
+use App\Http\Controllers\Profile\SlugController;
+use App\Http\Controllers\UserBioController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'home')->name('home');
+Route::get('users/{slug}/bio', [UserBioController::class, 'show'])->name('users.bio');
 
 Route::middleware('guest')->group(function () {
     Route::get('register', [RegisterController::class, 'create'])->name('register');
@@ -45,6 +48,8 @@ Route::middleware('auth')->group(function () {
     Route::patch('profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::post('profile/photo', [ProfilePhotoController::class, 'update'])->middleware('throttle:10,1')->name('profile.photo.update');
     Route::delete('profile/photo', [ProfilePhotoController::class, 'destroy'])->name('profile.photo.destroy');
+    Route::get('profile/slug/check', [SlugController::class, 'check'])->middleware('throttle:60,1')->name('profile.slug.check');
+    Route::put('profile/slug', [SlugController::class, 'update'])->middleware('throttle:10,1')->name('profile.slug.update');
     Route::put('profile/password', [PasswordController::class, 'update'])->middleware('throttle:6,1')->name('profile.password.update');
 
     Route::get('email/verify', [EmailVerificationController::class, 'notice'])->name('verification.notice');

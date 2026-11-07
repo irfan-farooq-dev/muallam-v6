@@ -48,6 +48,57 @@
         </div>
     </div>
 
+    {{-- Public profile link --}}
+    <div class="card settings-card mb-4">
+        <div class="card-body p-4">
+            <h3 class="h5 mb-1">Public profile link</h3>
+            <p class="text-secondary small mb-3">
+                Your bio page lives at this address. Old links keep redirecting after a change, and you can change it once every {{ config('muallam.slug_change_cooldown_days') }} days.
+            </p>
+
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                <code class="profile-link text-break">{{ route('users.bio', $user->slug) }}</code>
+                <a href="{{ route('users.bio', $user->slug) }}" class="btn btn-sm btn-outline-accent" target="_blank" rel="noopener">
+                    <i class="bi bi-box-arrow-up-right me-1"></i>View
+                </a>
+                <button type="button" class="btn btn-sm btn-outline-accent"
+                        x-data="{ copied: false }"
+                        @click="navigator.clipboard.writeText(@js(route('users.bio', $user->slug))); copied = true; setTimeout(() => copied = false, 1500)">
+                    <i class="bi" :class="copied ? 'bi-check2' : 'bi-clipboard'"></i>
+                    <span x-text="copied ? 'Copied' : 'Copy'">Copy</span>
+                </button>
+            </div>
+            @unless ($user->is_bio_public)
+                <p class="small text-warning-emphasis mb-3"><i class="bi bi-eye-slash me-1"></i>Your bio is hidden, so only you can open this page. Turn on "Show my bio" below to make it public.</p>
+            @endunless
+
+            @if ($nextSlugChange)
+                <p class="small text-secondary mb-0"><i class="bi bi-clock me-1"></i>You can change your link again on {{ $nextSlugChange->format('j M Y') }}.</p>
+            @else
+                <form method="POST" action="{{ route('profile.slug.update') }}"
+                      x-data="slugForm(@js(['current' => $user->slug, 'initial' => old('slug', $user->slug), 'checkUrl' => route('profile.slug.check'), 'serverError' => $errors->updateSlug->first('slug')]))"
+                      @submit="if (!canSave) $event.preventDefault()">
+                    @csrf
+                    @method('PUT')
+
+                    <div class="input-group">
+                        <span class="input-group-text d-none d-md-flex">{{ url('users') }}/</span>
+                        <input type="text" name="slug" class="form-control" maxlength="100" autocomplete="off" spellcheck="false"
+                               aria-label="New profile link" x-model="slug" @input.debounce.400ms="check()"
+                               :class="{ 'is-valid': status === 'available', 'is-invalid': status === 'unavailable' }">
+                        <span class="input-group-text d-none d-md-flex">/bio</span>
+                        <button type="submit" class="btn btn-accent" :disabled="!canSave">Save link</button>
+                    </div>
+                    <div class="small mt-1" aria-live="polite">
+                        <span x-show="status === 'checking'" class="text-secondary">Checking…</span>
+                        <span x-show="status === 'available'" class="text-success"><i class="bi bi-check-circle me-1"></i>Available: <span x-text="preview"></span></span>
+                        <span x-show="status === 'unavailable'" class="text-danger" x-text="message"></span>
+                    </div>
+                </form>
+            @endif
+        </div>
+    </div>
+
     {{-- Personal details --}}
     <div class="card settings-card mb-4">
         <div class="card-body p-4">
@@ -203,4 +254,46 @@
 
 @push('scripts')
     <script src="{{ asset('js/auth-form.js') }}"></script>
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('slugForm', ({ current, initial, checkUrl, serverError }) => ({
+                slug: initial,
+                status: serverError ? 'unavailable' : 'idle',
+                message: serverError,
+                preview: '',
+                checked: null,
+                request: 0,
+
+                get canSave() {
+                    return this.status === 'available' && this.checked === this.slug;
+                },
+
+                async check() {
+                    const value = this.slug.trim();
+                    if (!value || value === current) {
+                        this.status = 'idle';
+                        return;
+                    }
+
+                    const request = ++this.request;
+                    this.status = 'checking';
+
+                    try {
+                        const response = await fetch(`${checkUrl}?slug=${encodeURIComponent(value)}`, { headers: { Accept: 'application/json' } });
+                        const result = await response.json();
+                        if (request !== this.request) return; // a newer check is already running
+
+                        this.checked = this.slug;
+                        this.status = result.available ? 'available' : 'unavailable';
+                        this.message = result.message;
+                        this.preview = result.url;
+                    } catch {
+                        if (request !== this.request) return;
+                        this.status = 'unavailable';
+                        this.message = 'Could not check right now. Please try again.';
+                    }
+                },
+            }));
+        });
+    </script>
 @endpush
