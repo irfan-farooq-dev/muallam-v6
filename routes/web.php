@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\EmailVerificationController;
@@ -124,6 +125,8 @@ Route::middleware('auth')->group(function () {
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'admin'])->group(function () {
     Route::get('/', AdminDashboardController::class)->name('dashboard');
     Route::resource('users', AdminUserController::class)->only(['index', 'edit', 'update', 'destroy']);
+    Route::resource('categories', AdminCategoryController::class)->except(['show']);
+    Route::post('categories/{category}/move', [AdminCategoryController::class, 'move'])->name('categories.move');
 });
 
 // Invited readers of restricted posts: invite link, then the post password.
