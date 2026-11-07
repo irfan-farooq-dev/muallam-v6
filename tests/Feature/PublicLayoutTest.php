@@ -29,7 +29,7 @@ class PublicLayoutTest extends TestCase
             ->assertOk()
             ->assertSee('Sign in')
             ->assertSee('Sign up')
-            ->assertDontSee('header-avatar', false);
+            ->assertDontSee('user-avatar', false);
     }
 
     public function test_signed_in_user_sees_their_account_menu_instead_of_sign_up(): void

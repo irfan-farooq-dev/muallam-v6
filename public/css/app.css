@@ -22,15 +22,19 @@
     color: var(--accent-color);
 }
 
-.header-avatar {
-    width: 36px;
-    height: 36px;
+.user-avatar {
+    flex-shrink: 0;
+    object-fit: cover;
+}
+
+.user-avatar-initials {
     border-radius: 50%;
     background: var(--accent-color);
     color: var(--contrast-color);
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    font-family: var(--nav-font);
     font-weight: 600;
 }
 
@@ -223,4 +227,15 @@
     display: inline-block;
     min-width: 6.25rem;
     text-align: center;
+}
+
+/* Profile page */
+.profile-photo-preview {
+    width: 96px;
+    height: 96px;
+}
+
+.settings-card {
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
 }

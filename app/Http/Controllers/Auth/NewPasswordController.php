@@ -5,12 +5,11 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\ResetPasswordRequest;
 use App\Models\User;
+use App\Services\UserSessions;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class NewPasswordController extends Controller
@@ -23,15 +22,12 @@ class NewPasswordController extends Controller
         ]);
     }
 
-    public function store(ResetPasswordRequest $request): RedirectResponse
+    public function store(ResetPasswordRequest $request, UserSessions $sessions): RedirectResponse
     {
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
-            function (User $user, string $password): void {
-                $user->forceFill([
-                    'password' => $password,
-                    'remember_token' => Str::random(60),
-                ]);
+            function (User $user, string $password) use ($sessions): void {
+                $user->forceFill(['password' => $password]);
 
                 // Opening the emailed link proves the person owns this address.
                 if (! $user->hasVerifiedEmail()) {
@@ -40,7 +36,8 @@ class NewPasswordController extends Controller
 
                 $user->save();
 
-                $this->signOutEverywhere($user);
+                // Ends sessions an attacker may have opened with the old password, and old "remember me" cookies.
+                $sessions->endOtherSessions($user);
 
                 event(new PasswordReset($user));
             }
@@ -54,16 +51,5 @@ class NewPasswordController extends Controller
 
         return redirect()->route('login')
             ->with('success', 'Your password has been changed. Please sign in with your new password.');
-    }
-
-    /**
-     * End every existing session for this user, e.g. one an attacker may have opened with the old password.
-     * "Remember me" cookies stop working because the remember token was replaced above.
-     */
-    private function signOutEverywhere(User $user): void
-    {
-        if (config('session.driver') === 'database') {
-            DB::table(config('session.table', 'sessions'))->where('user_id', $user->getKey())->delete();
-        }
     }
 }

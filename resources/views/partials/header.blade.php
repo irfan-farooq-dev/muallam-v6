@@ -28,7 +28,7 @@
                 <div class="dropdown">
                     <button class="btn btn-link header-account-toggle d-flex align-items-center gap-2 p-0" type="button"
                             data-bs-toggle="dropdown" aria-expanded="false">
-                        <span class="header-avatar">{{ str(auth()->user()->name)->substr(0, 1)->upper() }}</span>
+                        <x-user-avatar :user="auth()->user()" :size="36" />
                         <span class="d-none d-md-inline">{{ auth()->user()->name }}</span>
                         <i class="bi bi-chevron-down small"></i>
                     </button>

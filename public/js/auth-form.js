@@ -17,6 +17,9 @@ document.addEventListener('alpine:init', () => {
             if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Please enter a valid email address.';
             return '';
         },
+        current_password(value, fields) {
+            return fields.current_password ? '' : 'Please enter your current password.';
+        },
         password(value, fields) {
             if (!fields.password) return 'Please choose a password.';
             if (fields.password.length < 8) return 'The password must be at least 8 characters.';

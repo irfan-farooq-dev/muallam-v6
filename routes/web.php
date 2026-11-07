@@ -7,6 +7,9 @@ use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Profile\PasswordController;
+use App\Http\Controllers\Profile\ProfileController;
+use App\Http\Controllers\Profile\ProfilePhotoController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'home')->name('home');
@@ -37,6 +40,12 @@ Route::middleware('auth')->group(function () {
     Route::post('logout', LogoutController::class)->name('logout');
 
     Route::get('dashboard', DashboardController::class)->name('dashboard');
+
+    Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('profile/photo', [ProfilePhotoController::class, 'update'])->middleware('throttle:10,1')->name('profile.photo.update');
+    Route::delete('profile/photo', [ProfilePhotoController::class, 'destroy'])->name('profile.photo.destroy');
+    Route::put('profile/password', [PasswordController::class, 'update'])->middleware('throttle:6,1')->name('profile.password.update');
 
     Route::get('email/verify', [EmailVerificationController::class, 'notice'])->name('verification.notice');
     Route::get('email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])

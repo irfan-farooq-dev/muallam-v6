@@ -21,7 +21,7 @@
                 <aside class="col-lg-3">
                     <nav class="member-nav" aria-label="Member area">
                         <div class="member-nav-user d-none d-lg-flex align-items-center gap-2 mb-3">
-                            <span class="header-avatar">{{ str(auth()->user()->name)->substr(0, 1)->upper() }}</span>
+                            <x-user-avatar :user="auth()->user()" :size="40" />
                             <div class="text-truncate">
                                 <div class="fw-semibold text-truncate">{{ auth()->user()->name }}</div>
                                 <div class="small text-secondary text-truncate">{{ auth()->user()->email }}</div>
