@@ -1,5 +1,44 @@
 /* Muallam overrides on top of the ZenBlog template (frontend/css/main.css). */
 
+/*
+ * Theme: the look of the original muallam.com - Poppins everywhere, near-black text and
+ * bold headings, Bootstrap's standard blue for buttons and links.
+ * Every ZenBlog and Muallam style reads these variables, so this block sets the whole look.
+ */
+:root {
+    --default-font: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    --heading-font: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    --nav-font: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    --default-color: #252525;
+    --heading-color: #252525;
+    --accent-color: #0d6efd;
+    --accent-hover-color: #0b5ed7;
+    --accent-active-color: #0a58ca;
+    --nav-color: #505050;
+    --nav-hover-color: #0d6efd;
+    --nav-dropdown-color: #505050;
+    --nav-dropdown-hover-color: #0d6efd;
+    --bs-body-font-family: var(--default-font);
+    --bs-link-color: #0d6efd;
+    --bs-link-hover-color: #0a58ca;
+}
+
+h1, h2, h3 {
+    font-weight: 700;
+}
+
+h4, h5, h6 {
+    font-weight: 600;
+}
+
+a {
+    color: var(--accent-color);
+}
+
+a:hover {
+    color: var(--accent-active-color);
+}
+
 /* Header */
 .header {
     border-bottom: 1px solid #e9ecef;
@@ -57,11 +96,11 @@
     --bs-btn-bg: var(--accent-color);
     --bs-btn-border-color: var(--accent-color);
     --bs-btn-hover-color: var(--contrast-color);
-    --bs-btn-hover-bg: #343e4d;
-    --bs-btn-hover-border-color: #343e4d;
+    --bs-btn-hover-bg: var(--accent-hover-color);
+    --bs-btn-hover-border-color: var(--accent-active-color);
     --bs-btn-active-color: var(--contrast-color);
-    --bs-btn-active-bg: #2b333f;
-    --bs-btn-active-border-color: #2b333f;
+    --bs-btn-active-bg: var(--accent-active-color);
+    --bs-btn-active-border-color: #0a53be;
     font-family: var(--nav-font);
 }
 
@@ -248,8 +287,8 @@
 }
 
 .profile-bio {
-    font-size: 1.15rem;
-    line-height: 1.7;
+    font-size: 1rem;
+    line-height: 1.75;
 }
 
 /* Category and post cards */
@@ -287,7 +326,7 @@
     border-color: #dee2e6;
     min-height: 360px;
     font-family: var(--default-font);
-    font-size: 1.1rem;
+    font-size: 1rem;
 }
 
 .post-editor.is-invalid .ql-toolbar.ql-snow,
@@ -349,8 +388,8 @@
 }
 
 .post-content {
-    font-size: 1.2rem;
-    line-height: 1.75;
+    font-size: 1.05rem;
+    line-height: 1.85;
     overflow-wrap: break-word;
 }
 
