@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 #[Fillable([
     'category_id',
@@ -40,6 +41,11 @@ class Post extends Model
         'status' => 'draft',
         'allow_comments' => true,
     ];
+
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
 
     /**
      * @return array<string, string>
@@ -116,6 +122,11 @@ class Post extends Model
         $query->where('status', PostStatus::Published)
             ->whereNotNull('published_at')
             ->where('published_at', '<=', now());
+    }
+
+    public function featuredImageUrl(): ?string
+    {
+        return $this->featured_image ? Storage::disk('public')->url($this->featured_image) : null;
     }
 
     public function isScheduled(): bool

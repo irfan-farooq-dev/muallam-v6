@@ -274,3 +274,39 @@
 .post-card-title a:hover {
     color: var(--accent-color);
 }
+
+/* Post editor */
+.post-editor .ql-toolbar.ql-snow {
+    border-radius: 8px 8px 0 0;
+    border-color: #dee2e6;
+    background: #f8f9fa;
+}
+
+.post-editor .ql-container.ql-snow {
+    border-radius: 0 0 8px 8px;
+    border-color: #dee2e6;
+    min-height: 360px;
+    font-family: var(--default-font);
+    font-size: 1.1rem;
+}
+
+.post-editor.is-invalid .ql-toolbar.ql-snow,
+.post-editor.is-invalid .ql-container.ql-snow {
+    border-color: var(--bs-form-invalid-border-color);
+}
+
+.featured-preview {
+    max-height: 200px;
+    width: 100%;
+    object-fit: cover;
+}
+
+.post-filters .nav-link {
+    font-family: var(--nav-font);
+    font-size: 0.9rem;
+    padding: 0.35rem 0.75rem;
+}
+
+.post-filters .nav-link.active {
+    background: var(--accent-color);
+}
