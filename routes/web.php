@@ -24,12 +24,15 @@ use App\Http\Controllers\Profile\ProfileController;
 use App\Http\Controllers\Profile\ProfilePhotoController;
 use App\Http\Controllers\Profile\SlugController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\SeoController;
 use App\Http\Controllers\UserBioController;
 use App\Models\Post;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
 Route::get('search', SearchController::class)->name('search');
+Route::get('sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
+Route::get('robots.txt', [SeoController::class, 'robots'])->name('robots');
 Route::get('categories', [CategoryController::class, 'index'])->name('categories.index');
 Route::get('category/{category}', [CategoryController::class, 'show'])->name('categories.show');
 Route::get('users/{slug}/bio', [UserBioController::class, 'show'])->name('users.bio');

@@ -10,6 +10,7 @@ use App\Services\PostSharing;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 /**
@@ -38,10 +39,37 @@ class PostController extends Controller
             'post' => $post,
             'isPublic' => $isPublic,
             'isInvitedReader' => $isInvitedReader,
+            'structuredData' => $isPublic ? $this->structuredData($post) : null,
             'likedByMe' => $likes->likes($request->user(), $post),
             'comments' => $isPublic ? $comments->thread($post, Gate::allows('update', $post)) : collect(),
             'related' => $this->related($post),
             'moreFromAuthor' => $this->moreFromAuthor($post),
+        ]);
+    }
+
+    /**
+     * schema.org BlogPosting data that search engines read from the post page.
+     *
+     * @return array<string, mixed>
+     */
+    private function structuredData(Post $post): array
+    {
+        return array_filter([
+            '@context' => 'https://schema.org',
+            '@type' => 'BlogPosting',
+            'headline' => Str::limit($post->title, 110, ''),
+            'description' => Str::limit($post->summary ?: strip_tags($post->body), 155),
+            'image' => $post->featuredImageUrl() ?: asset('img/og-default.png'),
+            'datePublished' => $post->published_at->toIso8601String(),
+            'dateModified' => $post->updated_at->toIso8601String(),
+            'author' => ['@type' => 'Person', 'name' => $post->user->name, 'url' => route('users.posts', $post->user->slug)],
+            'publisher' => [
+                '@type' => 'Organization',
+                'name' => config('app.name'),
+                'logo' => ['@type' => 'ImageObject', 'url' => asset('frontend/img/apple-touch-icon.png')],
+            ],
+            'mainEntityOfPage' => route('posts.show', $post),
+            'articleSection' => $post->category?->name,
         ]);
     }
 

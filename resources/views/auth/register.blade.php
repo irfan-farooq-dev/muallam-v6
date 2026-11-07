@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('robots', 'noindex, follow')
+
 @section('title', 'Sign up')
 @section('meta_description', 'Create your free Muallam account to start writing and sharing articles.')
 

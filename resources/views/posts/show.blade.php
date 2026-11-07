@@ -3,9 +3,24 @@
 @section('title', $post->title)
 @section('meta_description', \Illuminate\Support\Str::limit($post->summary ?: strip_tags($post->body), 155))
 
-@if (! $isPublic)
-    @push('styles')
-        <meta name="robots" content="noindex, nofollow">
+@section('canonical', route('posts.show', $post))
+@section('og_type', 'article')
+@if ($post->featuredImageUrl())
+    @section('og_image', $post->featuredImageUrl())
+@endif
+@unless ($isPublic)
+    @section('robots', 'noindex, nofollow')
+@endunless
+
+@if ($isPublic)
+    @push('meta')
+        <meta property="article:published_time" content="{{ $post->published_at->toIso8601String() }}">
+        <meta property="article:modified_time" content="{{ $post->updated_at->toIso8601String() }}">
+        @if ($post->category)
+            <meta property="article:section" content="{{ $post->category->name }}">
+        @endif
+        {{-- Built in PostController: Blade would treat "@context" in this file as one of its own commands. --}}
+        <script type="application/ld+json">{!! json_encode($structuredData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) !!}</script>
     @endpush
 @endif
 

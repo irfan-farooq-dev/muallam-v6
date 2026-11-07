@@ -3,6 +3,14 @@
 @section('title', $profileUser->name)
 @section('meta_description', \Illuminate\Support\Str::limit($profileUser->bio ?? "{$profileUser->name} on Muallam", 155))
 
+@section('og_type', 'profile')
+@if ($profileUser->avatarUrl())
+    @section('og_image', $profileUser->avatarUrl())
+@endif
+@unless ($profileUser->is_bio_public)
+    @section('robots', 'noindex, nofollow')
+@endunless
+
 @section('content')
     <section class="section">
         <div class="container">

@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('robots', 'noindex, follow')
+
 @section('title', 'Sign in')
 @section('meta_description', 'Sign in to your Muallam account.')
 

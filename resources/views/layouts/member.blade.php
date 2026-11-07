@@ -5,6 +5,8 @@
 --}}
 @extends('layouts.app')
 
+@section('robots', 'noindex, nofollow')
+
 @php
     $memberLinks = [
         ['route' => 'dashboard', 'active' => 'dashboard', 'icon' => 'bi-speedometer2', 'label' => 'Dashboard'],

@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('robots', 'noindex, follow')
+
 @section('title', 'Choose a new password')
 
 @section('content')

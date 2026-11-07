@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ trim($__env->yieldContent('title')) ? trim($__env->yieldContent('title')).' | ' : '' }}{{ config('app.name') }}</title>
-    <meta name="description" content="@yield('meta_description', 'Muallam: articles and tutorials written by people who teach what they know.')">
+    @include('partials.meta')
 
     <link rel="icon" href="{{ asset('frontend/img/favicon.png') }}">
     <link rel="apple-touch-icon" href="{{ asset('frontend/img/apple-touch-icon.png') }}">

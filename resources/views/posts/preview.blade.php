@@ -2,9 +2,7 @@
 
 @section('title', 'Preview: '.$post->title)
 
-@push('styles')
-    <meta name="robots" content="noindex, nofollow">
-@endpush
+@section('robots', 'noindex, nofollow')
 
 @section('content')
     <div class="preview-banner">

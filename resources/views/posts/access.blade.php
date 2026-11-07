@@ -2,9 +2,7 @@
 
 @section('title', 'Enter the post password')
 
-@push('styles')
-    <meta name="robots" content="noindex, nofollow">
-@endpush
+@section('robots', 'noindex, nofollow')
 
 @section('content')
     <section class="section auth-section">

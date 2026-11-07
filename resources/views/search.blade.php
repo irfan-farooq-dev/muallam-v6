@@ -2,9 +2,7 @@
 
 @section('title', $query !== '' ? "Search: {$query}" : 'Search')
 
-@push('styles')
-    <meta name="robots" content="noindex, follow">
-@endpush
+@section('robots', 'noindex, follow')
 
 @section('content')
     <section class="section">
