@@ -109,3 +109,42 @@
 [x-cloak] {
     display: none !important;
 }
+
+/* Sign up / sign in */
+.auth-section {
+    padding: 56px 0 72px;
+}
+
+.auth-card {
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+}
+
+.field-error {
+    color: var(--bs-form-invalid-color);
+    font-size: 0.875rem;
+    min-height: 1.25rem;
+}
+
+.password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 0.5rem;
+    transform: translateY(-50%);
+    color: var(--bs-secondary-color);
+    z-index: 5;
+}
+
+.password-strength .progress {
+    height: 4px;
+}
+
+/* Keep Bootstrap's valid/invalid icon clear of the show-password button. */
+.form-control.has-toggle {
+    padding-right: 4.5rem;
+}
+
+.form-control.has-toggle.is-valid,
+.form-control.has-toggle.is-invalid {
+    background-position: right 2.75rem center;
+}
