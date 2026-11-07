@@ -1,0 +1,111 @@
+/* Muallam overrides on top of the ZenBlog template (frontend/css/main.css). */
+
+/* Header */
+.header {
+    border-bottom: 1px solid #e9ecef;
+    padding: 12px 0;
+}
+
+.header .logo h1 {
+    font-weight: 700;
+}
+
+.header-account-toggle {
+    color: var(--default-color);
+    text-decoration: none;
+    font-family: var(--nav-font);
+    font-size: 0.95rem;
+}
+
+.header-account-toggle:hover,
+.header-account-toggle:focus {
+    color: var(--accent-color);
+}
+
+.header-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--accent-color);
+    color: var(--contrast-color);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+
+.header .dropdown-menu {
+    font-family: var(--nav-font);
+    font-size: 0.95rem;
+}
+
+/* Below 1200px ZenBlog orders the logo (1) and the menu toggle (3); keep the account area between them. */
+@media (max-width: 1200px) {
+    .header .header-account {
+        order: 2;
+        margin-right: 0.75rem;
+    }
+}
+
+/* Buttons in the brand colour */
+.btn-accent {
+    --bs-btn-color: var(--contrast-color);
+    --bs-btn-bg: var(--accent-color);
+    --bs-btn-border-color: var(--accent-color);
+    --bs-btn-hover-color: var(--contrast-color);
+    --bs-btn-hover-bg: #343e4d;
+    --bs-btn-hover-border-color: #343e4d;
+    --bs-btn-active-color: var(--contrast-color);
+    --bs-btn-active-bg: #2b333f;
+    --bs-btn-active-border-color: #2b333f;
+    font-family: var(--nav-font);
+}
+
+.btn-outline-accent {
+    --bs-btn-color: var(--accent-color);
+    --bs-btn-border-color: var(--accent-color);
+    --bs-btn-hover-color: var(--contrast-color);
+    --bs-btn-hover-bg: var(--accent-color);
+    --bs-btn-hover-border-color: var(--accent-color);
+    --bs-btn-active-color: var(--contrast-color);
+    --bs-btn-active-bg: var(--accent-color);
+    --bs-btn-active-border-color: var(--accent-color);
+    font-family: var(--nav-font);
+}
+
+/* Home */
+.home-hero {
+    padding: 72px 0;
+}
+
+.home-hero-lead {
+    max-width: 640px;
+}
+
+.empty-state {
+    border: 1px dashed #dee2e6;
+    border-radius: 8px;
+}
+
+/* Footer */
+.footer {
+    background: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+}
+
+/* Error pages */
+.error-page {
+    padding: 96px 0;
+}
+
+.error-page .error-code {
+    font-family: var(--nav-font);
+    font-size: 4.5rem;
+    font-weight: 700;
+    color: var(--accent-color);
+    line-height: 1;
+}
+
+[x-cloak] {
+    display: none !important;
+}
