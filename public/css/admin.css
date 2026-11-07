@@ -1,0 +1,80 @@
+/*
+ * Admin panel overrides on top of Sneat (admin/vendor/css/*-muallam.css).
+ *
+ * Those two files are copies of Sneat's core.css and theme-default.css with the purple (#696cff family)
+ * swapped for Bootstrap blue (#0d6efd family). To recreate them after updating Sneat, run the sed
+ * command from the admin-layout feature report, or replace the same colours again.
+ */
+:root {
+    --bs-font-sans-serif: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    --bs-body-font-family: var(--bs-font-sans-serif);
+    --bs-heading-color: #252525;
+}
+
+body {
+    font-family: var(--bs-font-sans-serif);
+    color: #3b4250;
+}
+
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6,
+.card-title {
+    color: #252525;
+    font-family: var(--bs-font-sans-serif);
+}
+
+/* Sneat sets the brand bar's height in its demo stylesheet, which is not loaded. */
+.layout-menu .app-brand {
+    height: 64px;
+    margin-top: 12px;
+}
+
+.app-brand-text {
+    font-size: 1.35rem;
+    color: #252525;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.user-avatar {
+    flex-shrink: 0;
+    object-fit: cover;
+}
+
+.user-avatar-initials {
+    border-radius: 50%;
+    background: #0d6efd;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+
+.stat-tile .stat-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+}
+
+.stat-tile .stat-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #252525;
+    line-height: 1.1;
+}
+
+.post-status-badge {
+    display: inline-block;
+    min-width: 6.25rem;
+    text-align: center;
+}
+
+.admin-list .list-group-item {
+    border-left: 0;
+    border-right: 0;
+}

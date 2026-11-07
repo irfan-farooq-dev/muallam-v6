@@ -52,6 +52,9 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end shadow-sm">
                         <li class="dropdown-header">{{ auth()->user()->email }}</li>
+                        @if (auth()->user()->isAdmin() && Route::has('admin.dashboard'))
+                            <li><a class="dropdown-item" href="{{ route('admin.dashboard') }}"><i class="bi bi-shield-lock me-2"></i>Admin panel</a></li>
+                        @endif
                         @if (Route::has('dashboard'))
                             <li><a class="dropdown-item" href="{{ route('dashboard') }}"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
                         @endif

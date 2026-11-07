@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
@@ -116,6 +117,11 @@ Route::middleware('auth')->group(function () {
         ->name('comments.store');
     Route::delete('comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
     Route::patch('comments/{comment}/visibility', [CommentController::class, 'visibility'])->name('comments.visibility');
+});
+
+// Admin panel (Sneat). Admins only.
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'admin'])->group(function () {
+    Route::get('/', AdminDashboardController::class)->name('dashboard');
 });
 
 // Invited readers of restricted posts: invite link, then the post password.
