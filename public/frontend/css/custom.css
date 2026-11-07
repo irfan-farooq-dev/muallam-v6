@@ -1,0 +1,76 @@
+html {
+    font-size: 16px;
+    /* default is 16px */
+}
+
+.floating-label-group {
+    position: relative;
+    /* margin-bottom: 1.5rem; */
+}
+
+/* Style for input field */
+.floating-label-group input {
+    border: 1px solid #ccc;
+    padding: 10px;
+    font-size: 16px;
+    width: 100%;
+    outline: none;
+    background-color: transparent;
+    position: relative;
+    z-index: 1;
+    /* Ensure input stays above */
+}
+
+.floating-label-group input:focus {
+    border-color: #007bff;
+    /* Bootstrap primary color */
+}
+
+/* Style for the label */
+.floating-label-group label {
+    position: absolute;
+    top: 50%;
+    left: 15px;
+    /* Adjust the left margin */
+    color: #777;
+    font-size: 16px;
+    /* Default font size */
+    transition: 0.2s ease all;
+    pointer-events: none;
+    transform: translateY(-50%);
+    background-color: white;
+    /* Background color to cover the border */
+    padding: 0 5px;
+    /* Padding to clear space for the label */
+    z-index: 0;
+    /* Label under the input */
+}
+
+/* When input is focused or has value, move label to the top */
+.floating-label-group input:focus~label,
+.floating-label-group input:not(:placeholder-shown)~label {
+    top: -16px;
+    /* Move label slightly above the input */
+    left: 5px;
+    /* Adjust the left position */
+    font-size: 14px;
+    /* Adjust the font size when floating */
+    color: #007bff;
+}
+
+.floating-label-group input:not(:placeholder-shown):valid~label {
+    color: #000;
+}
+
+.floating-label-group input {
+    font-size: 1.1rem;
+}
+
+.form-select {
+    height: 48px;
+    /* same as input height */
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    line-height: 48px;
+    /* vertically center text */
+}
