@@ -9,10 +9,12 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\Posts\LikedPostsController;
 use App\Http\Controllers\Posts\MyPostsController;
 use App\Http\Controllers\Posts\PostController;
 use App\Http\Controllers\Posts\PostEditorController;
 use App\Http\Controllers\Posts\PostImageUploadController;
+use App\Http\Controllers\Posts\PostLikeController;
 use App\Http\Controllers\Posts\PostPreviewController;
 use App\Http\Controllers\Profile\PasswordController;
 use App\Http\Controllers\Profile\ProfileController;
@@ -85,6 +87,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('posts/{post}/edit', [PostEditorController::class, 'edit'])->can('update', 'post')->name('posts.edit');
     Route::put('posts/{post}', [PostEditorController::class, 'update'])->can('update', 'post')->name('posts.update');
     Route::delete('posts/{post}', [PostEditorController::class, 'destroy'])->can('delete', 'post')->name('posts.destroy');
+});
+
+Route::middleware('auth')->group(function () {
+    Route::post('posts/{post}/like', [PostLikeController::class, 'toggle'])
+        ->can('like', 'post')
+        ->middleware('throttle:60,1')
+        ->name('posts.like');
+    Route::get('posts/{post}/like', [PostLikeController::class, 'signInToLike'])->name('posts.like.sign-in');
+    Route::get('my/likes', LikedPostsController::class)->name('likes.index');
 });
 
 // Registered last so fixed addresses such as /posts/create are matched first.

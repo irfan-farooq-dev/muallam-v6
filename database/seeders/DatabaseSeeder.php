@@ -55,7 +55,8 @@ class DatabaseSeeder extends Seeder
         $people = $authors->merge($readers);
 
         Post::query()->publiclyVisible()->get()->each(function (Post $post) use ($people): void {
-            $people->random(random_int(0, 6))->each(
+            // Authors never like their own posts (the app does not allow it either).
+            $people->reject(fn (User $user): bool => $user->is($post->user))->random(random_int(0, 6))->each(
                 fn (User $user) => Like::factory()->for($user)->for($post)->create()
             );
 

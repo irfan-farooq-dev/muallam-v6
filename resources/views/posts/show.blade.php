@@ -49,7 +49,7 @@
 
                     <div class="post-footer d-flex flex-wrap align-items-center gap-3 mt-5 pt-3 small text-secondary">
                         <span title="Views"><i class="bi bi-eye me-1"></i>{{ number_format($post->views_count) }} {{ \Illuminate\Support\Str::plural('view', $post->views_count) }}</span>
-                        <span title="Likes"><i class="bi bi-hand-thumbs-up me-1"></i>{{ number_format($post->likes_count) }}</span>
+                        @include('posts.partials.like-button', ['post' => $post, 'isPublic' => $isPublic, 'likedByMe' => $likedByMe])
                         <span title="Comments"><i class="bi bi-chat me-1"></i>{{ number_format($post->comments_count) }}</span>
                     </div>
 

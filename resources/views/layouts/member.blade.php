@@ -9,6 +9,7 @@
     $memberLinks = [
         ['route' => 'dashboard', 'active' => 'dashboard', 'icon' => 'bi-speedometer2', 'label' => 'Dashboard'],
         ['route' => 'posts.mine', 'active' => 'posts.*', 'icon' => 'bi-journal-text', 'label' => 'My posts'],
+        ['route' => 'likes.index', 'active' => 'likes.*', 'icon' => 'bi-hand-thumbs-up', 'label' => 'Liked posts'],
         ['route' => 'profile.edit', 'active' => 'profile.*', 'icon' => 'bi-person', 'label' => 'Profile'],
     ];
     $memberLinks = array_filter($memberLinks, fn (array $link): bool => Route::has($link['route']));

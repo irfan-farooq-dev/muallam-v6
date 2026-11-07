@@ -436,3 +436,28 @@
 .site-breadcrumbs .breadcrumb-item.active {
     color: var(--bs-secondary-color);
 }
+
+/* Like button */
+.like-button {
+    border: 1px solid #dee2e6;
+    border-radius: 20px;
+    color: var(--default-color);
+    font-family: var(--nav-font);
+    padding: 0.2rem 0.75rem;
+}
+
+.like-button:hover {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+}
+
+.like-button.is-liked {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    color: var(--contrast-color);
+}
+
+.like-button .like-count {
+    font-weight: 600;
+    margin-left: 0.25rem;
+}

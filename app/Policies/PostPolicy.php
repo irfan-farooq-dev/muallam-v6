@@ -30,6 +30,15 @@ class PostPolicy
         return $user !== null && $this->ownsOrAdministers($user, $post);
     }
 
+    /**
+     * Readers can like live public posts, but not their own.
+     */
+    public function like(User $user, Post $post): bool
+    {
+        return $post->user_id !== $user->getKey()
+            && Post::publiclyVisible()->whereKey($post->getKey())->exists();
+    }
+
     public function update(User $user, Post $post): bool
     {
         return $this->ownsOrAdministers($user, $post);
