@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Posts;
 
 use App\Http\Controllers\Controller;
 use App\Models\Post;
+use App\Services\PostComments;
 use App\Services\PostLikes;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
@@ -17,7 +18,7 @@ class PostController extends Controller
 {
     private const RELATED_POSTS = 3;
 
-    public function show(Request $request, Post $post, PostLikes $likes): View
+    public function show(Request $request, Post $post, PostLikes $likes, PostComments $comments): View
     {
         // Hidden posts look like they do not exist to anyone who may not see them.
         abort_unless(Gate::allows('view', $post), 404);
@@ -33,6 +34,7 @@ class PostController extends Controller
             'post' => $post,
             'isPublic' => $isPublic,
             'likedByMe' => $likes->likes($request->user(), $post),
+            'comments' => $isPublic ? $comments->thread($post, Gate::allows('update', $post)) : collect(),
             'related' => $this->related($post),
             'moreFromAuthor' => $this->moreFromAuthor($post),
         ]);

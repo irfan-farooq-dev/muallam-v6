@@ -9,6 +9,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\Posts\CommentController;
 use App\Http\Controllers\Posts\LikedPostsController;
 use App\Http\Controllers\Posts\MyPostsController;
 use App\Http\Controllers\Posts\PostController;
@@ -96,6 +97,13 @@ Route::middleware('auth')->group(function () {
         ->name('posts.like');
     Route::get('posts/{post}/like', [PostLikeController::class, 'signInToLike'])->name('posts.like.sign-in');
     Route::get('my/likes', LikedPostsController::class)->name('likes.index');
+
+    Route::get('posts/{post}/comments', [CommentController::class, 'signInToComment'])->name('comments.sign-in');
+    Route::post('posts/{post}/comments', [CommentController::class, 'store'])
+        ->middleware(['verified', 'throttle:10,1'])
+        ->name('comments.store');
+    Route::delete('comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
+    Route::patch('comments/{comment}/visibility', [CommentController::class, 'visibility'])->name('comments.visibility');
 });
 
 // Registered last so fixed addresses such as /posts/create are matched first.
