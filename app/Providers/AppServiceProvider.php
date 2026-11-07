@@ -2,12 +2,15 @@
 
 namespace App\Providers;
 
+use App\Models\Category;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -26,6 +29,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Paginator::useBootstrapFive();
+
+        View::composer('partials.header', fn ($view) => $view->with('navCategories', Category::forNavigation()));
+
         VerifyEmail::toMailUsing(fn (object $notifiable, string $url): MailMessage => (new MailMessage)
             ->subject('Verify your Muallam email address')
             ->greeting("Hi {$notifiable->name},")

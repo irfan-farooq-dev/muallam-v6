@@ -251,3 +251,26 @@
     font-size: 1.15rem;
     line-height: 1.7;
 }
+
+/* Category and post cards */
+.category-card,
+.post-card {
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    color: var(--default-color);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.category-card:hover,
+.post-card:hover {
+    border-color: var(--accent-color);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.post-card-title a {
+    color: var(--heading-color);
+}
+
+.post-card-title a:hover {
+    color: var(--accent-color);
+}

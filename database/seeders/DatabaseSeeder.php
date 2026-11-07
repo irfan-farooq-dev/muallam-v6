@@ -35,12 +35,8 @@ class DatabaseSeeder extends Seeder
 
         $readers = User::factory()->count(6)->create();
 
-        $categories = collect(['Programming', 'Databases', 'Web Development', 'Career', 'Tutorials'])
-            ->map(fn (string $name, int $order): Category => Category::factory()->create([
-                'name' => $name,
-                'slug' => str($name)->slug()->toString(),
-                'sort_order' => $order,
-            ]));
+        $this->call(CategorySeeder::class);
+        $categories = Category::all();
 
         $authors->each(function (User $author) use ($categories): void {
             Post::factory()->count(5)->published()->for($author)

@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Profile\PasswordController;
 use App\Http\Controllers\Profile\ProfileController;
@@ -15,6 +16,8 @@ use App\Http\Controllers\UserBioController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'home')->name('home');
+Route::get('categories', [CategoryController::class, 'index'])->name('categories.index');
+Route::get('category/{category}', [CategoryController::class, 'show'])->name('categories.show');
 Route::get('users/{slug}/bio', [UserBioController::class, 'show'])->name('users.bio');
 
 Route::middleware('guest')->group(function () {

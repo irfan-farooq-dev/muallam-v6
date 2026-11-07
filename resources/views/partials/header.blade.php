@@ -9,6 +9,20 @@
             <ul>
                 <li><a href="{{ route('home') }}" @class(['active' => request()->routeIs('home')])>Home</a></li>
 
+                @if ($navCategories !== [])
+                    <li class="dropdown">
+                        <a href="{{ route('categories.index') }}" @class(['active' => request()->routeIs('categories.*')])>
+                            <span>Categories</span> <i class="bi bi-chevron-down toggle-dropdown"></i>
+                        </a>
+                        <ul>
+                            @foreach ($navCategories as $navCategory)
+                                <li><a href="{{ route('categories.show', $navCategory['slug']) }}">{{ $navCategory['name'] }}</a></li>
+                            @endforeach
+                            <li><a href="{{ route('categories.index') }}" class="fw-semibold">All categories</a></li>
+                        </ul>
+                    </li>
+                @endif
+
                 @guest
                     {{-- On small screens the account links live inside the menu. --}}
                     <li class="d-sm-none"><a href="{{ Route::has('login') ? route('login') : '#' }}">Sign in</a></li>
