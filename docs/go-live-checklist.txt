@@ -1,0 +1,197 @@
+MUALLAM GO-LIVE CHECKLIST
+=========================
+Everything to do when deploying muallam.com, plus decisions and features left
+for later. (Same content as docs/go-live-checklist.html.)
+
+
+1. SERVER REQUIREMENTS
+----------------------
+[ ] PHP 8.3 or newer (developed on 8.4) with extensions: gd WITH WEBP SUPPORT
+    (all image resizing uses it), pdo_mysql, mbstring, fileinfo, openssl,
+    tokenizer, xml, ctype, bcmath. exif is optional (straightens sideways
+    phone photos).
+[ ] MySQL 8.x or newer (developed on 9.7), database in utf8mb4 /
+    utf8mb4_0900_ai_ci.
+[ ] Web server document root points to the public/ folder, not the project root.
+[ ] PHP upload limits: upload_max_filesize >= 6M and post_max_size >= 10M
+    (images up to 5 MB, featured image up to 4 MB, sent with the post).
+[ ] storage/ and bootstrap/cache/ writable by the web server user.
+[ ] HTTPS certificate installed; http:// and www. redirect to
+    https://muallam.com.
+[ ] No Node/npm needed (no build step). Composer is needed.
+
+
+2. PRODUCTION .env
+------------------
+Copy .env.example to .env on the server and set at least:
+
+    APP_NAME=Muallam
+    APP_ENV=production          # also switches robots.txt to "welcome crawlers"
+    APP_DEBUG=false             # never true on the live site
+    APP_URL=https://muallam.com # used in emails, sitemap, share links
+    APP_TIMEZONE=UTC            # see "Decisions still open"
+
+    DB_CONNECTION=mysql
+    DB_HOST=...
+    DB_PORT=3306
+    DB_DATABASE=...
+    DB_USERNAME=...
+    DB_PASSWORD=...
+
+    SESSION_DRIVER=database
+    SESSION_SECURE_COOKIE=true
+    CACHE_STORE=database
+    QUEUE_CONNECTION=database
+
+    MAIL_MAILER=smtp
+    MAIL_HOST=...
+    MAIL_PORT=587
+    MAIL_USERNAME=...
+    MAIL_PASSWORD=...
+    MAIL_FROM_ADDRESS="no-reply@muallam.com"
+    MAIL_FROM_NAME="Muallam"
+
+[ ] Generate a new key on the server: php artisan key:generate
+    (never reuse the local key). Keep a safe copy: if it is lost, sessions and
+    remember-me cookies stop working.
+[ ] Check APP_DEBUG=false and APP_ENV=production before opening the site.
+
+
+3. DEPLOYMENT COMMANDS
+----------------------
+Run from the project folder on the server, in this order:
+
+    composer install --no-dev --optimize-autoloader
+    php artisan key:generate              # first deploy only
+    php artisan migrate --force
+    php artisan db:seed --class=CategorySeeder --force
+    php artisan storage:link              # makes uploaded images reachable
+    php artisan optimize                  # caches config, routes, views, events
+
+!! NEVER run plain "php artisan db:seed" or "migrate:fresh --seed" on the live
+!! site. The default seeder creates demo users (password "password") and fake
+!! posts. Only CategorySeeder is safe; it can be run again any time and never
+!! deletes anything.
+
+[ ] After every later deploy: composer install --no-dev --optimize-autoloader,
+    php artisan migrate --force, php artisan optimize.
+[ ] If you change .env later, run php artisan optimize again (config is cached).
+
+
+4. SCHEDULER (CRON)
+-------------------
+One cron line runs Laravel's scheduler every minute. Today it runs
+posts:prune-images daily at midnight (deletes editor uploads never saved into
+a post, older than 24 hours).
+
+    * * * * * cd /path/to/muallam && php artisan schedule:run >> /dev/null 2>&1
+
+[ ] Cron line added (replace /path/to/muallam).
+[ ] Check: php artisan schedule:list shows posts:prune-images.
+
+
+5. FIRST ADMIN ACCOUNT
+----------------------
+No admin sign-up screen yet (the admin panel is a later feature). Register
+normally on the live site, verify the email, then promote yourself:
+
+    php artisan tinker --execute 'App\Models\User::where("email", "you@example.com")->update(["role" => "admin"]);'
+
+[ ] Admin account created and promoted.
+
+
+6. EMAIL DELIVERY
+-----------------
+The site sends: email verification, password reset, restricted-post invites.
+
+[ ] SMTP provider set up (host's mail, or Mailgun / Postmark / Amazon SES /
+    Brevo).
+[ ] DNS records for muallam.com: SPF, DKIM and DMARC, so emails do not land
+    in spam.
+[ ] Send yourself one of each: sign up (verification), "Forgot password"
+    (reset), invite yourself to a restricted post from another account
+    (invite). Check links open https://muallam.com/...
+
+
+7. SMOKE TEST AFTER GOING LIVE
+------------------------------
+[ ] Home, a category, a post, search and an author page load over HTTPS.
+[ ] Sign up, verify email, sign in, sign out, reset password.
+[ ] Profile: upload a photo (checks gd, WebP and storage:link), change slug,
+    view the public bio page.
+[ ] Write a post with a featured image and an image inside the text;
+    Preview; Publish; open it signed out.
+[ ] Like and comment from a second account; hide a comment as the author.
+[ ] Restricted post: invite an address you can read, open the link signed
+    out, enter the password, then revoke.
+[ ] An unknown address shows the styled 404 page, not a Laravel debug page
+    (proves APP_DEBUG=false).
+
+
+8. SEO AFTER GOING LIVE
+-----------------------
+[ ] Open https://muallam.com/robots.txt: it must list the Disallow: rules and
+    the Sitemap: line. If it says only "Disallow: /", APP_ENV is not
+    production.
+[ ] Open https://muallam.com/sitemap.xml: it lists public pages with https://
+    addresses. (It refreshes at most once an hour.)
+[ ] Google Search Console: add and verify muallam.com, then submit
+    https://muallam.com/sitemap.xml
+[ ] Bing Webmaster Tools: add the site (can import from Search Console) and
+    submit the sitemap.
+[ ] Test link previews: paste a post link into the Facebook Sharing Debugger
+    and the LinkedIn Post Inspector; then share it on WhatsApp.
+[ ] Test a post with Google's Rich Results Test (article data, breadcrumbs).
+[ ] Optional: replace public/img/og-default.png (share image for posts
+    without a featured image) with a designed 1200x630 image with your logo.
+
+
+9. BACKUPS AND HOUSEKEEPING
+---------------------------
+[ ] Daily database backup (users, posts, comments, likes, invites).
+[ ] Daily backup of storage/app/public/ - all uploaded avatars, featured
+    images and post images live there. The database alone is not enough.
+[ ] Keep .env (with APP_KEY) in a safe place outside the server.
+[ ] Watch storage/logs/laravel.log for errors in the first days.
+[ ] Optional tidy-up: delete AGENTS.md if you do not use other AI tools; trim
+    unused Bootstrap/template files in public/frontend and public/admin once
+    the admin panel is built.
+
+
+10. DECISIONS STILL OPEN
+------------------------
+- Time zone: today APP_TIMEZONE=UTC, so scheduled posts and dates use UTC.
+  Option: APP_TIMEZONE=Asia/Karachi so 10:00 means 10:00 local time.
+  Decide BEFORE writers schedule posts.
+- Hiding a comment that has replies: replies disappear with it but still
+  count in the comment total. Option: make hidden threads uncount replies.
+- Like button on post cards: cards show the count only (liking happens on
+  the post page). Option: add a button to cards.
+- GIF images: rejected (converter keeps only the first frame).
+  Option: store GIFs as-is instead of converting.
+
+
+11. FEATURES AND IMPROVEMENTS FOR LATER
+---------------------------------------
+Planned next:
+[ ] Admin panel (Sneat): dashboard, users, categories, posts, comments.
+    - When deleting a user, RECOUNT likes and comments on the posts they
+      liked or commented on.
+    - When deactivating a user, SIGN THEM OUT IMMEDIATELY (today they stay
+      signed in until they log out).
+[ ] Mobile app API (Sanctum tokens, users.fcm_token for push notifications).
+
+Deferred (agreed earlier):
+[ ] Protect images of private and restricted posts (serve them through a
+    permission check instead of public addresses).
+[ ] Image captions in the editor; replace the browser's plain "describe this
+    image" pop-up with a styled dialog.
+[ ] Notifications: someone liked your post, commented, or replied to you.
+[ ] Per-view log (post_views, like the old project's blog_views); today only
+    views_count is kept, once per visitor session.
+[ ] Editing comments (for example within 15 minutes of posting).
+[ ] RSS feed.
+[ ] Switch search to MySQL full-text search when posts grow into the
+    thousands.
+
+Database design: docs/database.md

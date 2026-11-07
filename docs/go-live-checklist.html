@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Muallam go-live checklist</title>
+<style>
+    :root { --ink: #212529; --muted: #6c757d; --accent: #465367; --line: #e3e6ea; --bg: #ffffff; --soft: #f6f7f9; --warn: #fff8e1; --warn-line: #f3e2a9; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+    main { max-width: 860px; margin: 0 auto; padding: 32px 16px 64px; }
+    h1 { font-size: 1.9rem; margin: 0 0 4px; color: var(--accent); }
+    h2 { font-size: 1.25rem; margin: 40px 0 8px; padding-bottom: 6px; border-bottom: 2px solid var(--line); }
+    h3 { font-size: 1.02rem; margin: 20px 0 6px; }
+    p.lead { color: var(--muted); margin-top: 0; }
+    ul.check { list-style: none; padding: 0; margin: 0; }
+    ul.check li { display: flex; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+    ul.check input { margin-top: 5px; flex-shrink: 0; width: 16px; height: 16px; }
+    ul.check label { flex: 1; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.88em; }
+    code { background: var(--soft); padding: 1px 5px; border-radius: 4px; }
+    pre { background: var(--soft); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; overflow-x: auto; white-space: pre; }
+    .note { background: var(--warn); border: 1px solid var(--warn-line); border-radius: 8px; padding: 10px 14px; margin: 12px 0; }
+    .muted { color: var(--muted); }
+    table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 0.95rem; }
+    th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { background: var(--soft); }
+    nav.toc { background: var(--soft); border-radius: 8px; padding: 12px 18px; margin: 20px 0; }
+    nav.toc ol { margin: 0; padding-left: 20px; }
+    a { color: var(--accent); }
+    @media print { input { -webkit-print-color-adjust: exact; } nav.toc { display: none; } }
+</style>
+</head>
+<body>
+<main>
+    <h1>Muallam go-live checklist</h1>
+    <p class="lead">Everything to do when deploying muallam.com, plus decisions and features left for later. Tick the boxes as you go (ticks are not saved; print the page if you want a paper copy).</p>
+
+    <nav class="toc">
+        <strong>Contents</strong>
+        <ol>
+            <li><a href="#server">Server requirements</a></li>
+            <li><a href="#env">Production <code>.env</code></a></li>
+            <li><a href="#deploy">Deployment commands</a></li>
+            <li><a href="#cron">Scheduler (cron)</a></li>
+            <li><a href="#admin">First admin account</a></li>
+            <li><a href="#email">Email delivery</a></li>
+            <li><a href="#check">Smoke test after going live</a></li>
+            <li><a href="#seo">SEO after going live</a></li>
+            <li><a href="#ops">Backups and housekeeping</a></li>
+            <li><a href="#decide">Decisions still open</a></li>
+            <li><a href="#later">Features and improvements for later</a></li>
+        </ol>
+    </nav>
+
+    <h2 id="server">1. Server requirements</h2>
+    <ul class="check">
+        <li><input type="checkbox" id="s1"><label for="s1">PHP <strong>8.3 or newer</strong> (developed on 8.4) with extensions: <code>gd</code> <strong>with WebP support</strong> (all image resizing uses it), <code>pdo_mysql</code>, <code>mbstring</code>, <code>fileinfo</code>, <code>openssl</code>, <code>tokenizer</code>, <code>xml</code>, <code>ctype</code>, <code>bcmath</code>. <code>exif</code> is optional (straightens sideways phone photos).</label></li>
+        <li><input type="checkbox" id="s2"><label for="s2">MySQL 8.x or newer (developed on 9.7), database created with <code>utf8mb4</code> / <code>utf8mb4_0900_ai_ci</code>.</label></li>
+        <li><input type="checkbox" id="s3"><label for="s3">Web server <strong>document root points to the <code>public/</code> folder</strong>, not the project root.</label></li>
+        <li><input type="checkbox" id="s4"><label for="s4">PHP upload limits: <code>upload_max_filesize</code> at least <code>6M</code> and <code>post_max_size</code> at least <code>10M</code> (images up to 5 MB, featured image up to 4 MB, sent together with the post).</label></li>
+        <li><input type="checkbox" id="s5"><label for="s5"><code>storage/</code> and <code>bootstrap/cache/</code> writable by the web server user.</label></li>
+        <li><input type="checkbox" id="s6"><label for="s6"><strong>HTTPS certificate</strong> installed; <code>http://</code> and <code>www.</code> redirect to <code>https://muallam.com</code>.</label></li>
+        <li><input type="checkbox" id="s7"><label for="s7">No Node/npm needed: the site has no build step. Composer is needed.</label></li>
+    </ul>
+
+    <h2 id="env">2. Production <code>.env</code></h2>
+    <p>Copy <code>.env.example</code> to <code>.env</code> on the server and set at least:</p>
+<pre>APP_NAME=Muallam
+APP_ENV=production          # also switches robots.txt to "welcome crawlers"
+APP_DEBUG=false             # never true on the live site
+APP_URL=https://muallam.com # used in emails, sitemap, share links
+APP_TIMEZONE=UTC            # see "Decisions still open"
+
+DB_CONNECTION=mysql
+DB_HOST=...
+DB_PORT=3306
+DB_DATABASE=...
+DB_USERNAME=...
+DB_PASSWORD=...
+
+SESSION_DRIVER=database
+SESSION_SECURE_COOKIE=true
+CACHE_STORE=database
+QUEUE_CONNECTION=database
+
+MAIL_MAILER=smtp
+MAIL_HOST=...
+MAIL_PORT=587
+MAIL_USERNAME=...
+MAIL_PASSWORD=...
+MAIL_FROM_ADDRESS="no-reply@muallam.com"
+MAIL_FROM_NAME="Muallam"</pre>
+    <ul class="check">
+        <li><input type="checkbox" id="e1"><label for="e1">Generate a new key on the server: <code>php artisan key:generate</code> (never reuse the local key). Keep a safe copy: if it is lost, sessions and remember-me cookies stop working.</label></li>
+        <li><input type="checkbox" id="e2"><label for="e2">Check <code>APP_DEBUG=false</code> and <code>APP_ENV=production</code> before opening the site.</label></li>
+    </ul>
+
+    <h2 id="deploy">3. Deployment commands</h2>
+    <p>Run from the project folder on the server, in this order:</p>
+<pre>composer install --no-dev --optimize-autoloader
+php artisan key:generate              # first deploy only
+php artisan migrate --force
+php artisan db:seed --class=CategorySeeder --force
+php artisan storage:link              # makes uploaded images reachable
+php artisan optimize                  # caches config, routes, views, events</pre>
+    <div class="note"><strong>Never run plain <code>php artisan db:seed</code> or <code>migrate:fresh --seed</code> on the live site.</strong> The default seeder creates demo users (password <code>password</code>) and fake posts. Only <code>CategorySeeder</code> is safe; it can be run again any time and never deletes anything.</div>
+    <ul class="check">
+        <li><input type="checkbox" id="d1"><label for="d1">After every later deploy: <code>composer install --no-dev --optimize-autoloader</code>, <code>php artisan migrate --force</code>, <code>php artisan optimize</code>.</label></li>
+        <li><input type="checkbox" id="d2"><label for="d2">If you change <code>.env</code> later, run <code>php artisan optimize</code> again (config is cached).</label></li>
+    </ul>
+
+    <h2 id="cron">4. Scheduler (cron)</h2>
+    <p>One cron line runs Laravel's scheduler every minute. Today it runs <code>posts:prune-images</code> daily at midnight (deletes editor uploads never saved into a post, older than 24 hours).</p>
+<pre>* * * * * cd /path/to/muallam && php artisan schedule:run >> /dev/null 2>&amp;1</pre>
+    <ul class="check">
+        <li><input type="checkbox" id="c1"><label for="c1">Cron line added (replace <code>/path/to/muallam</code>).</label></li>
+        <li><input type="checkbox" id="c2"><label for="c2">Check it is picked up: <code>php artisan schedule:list</code> shows <code>posts:prune-images</code>.</label></li>
+    </ul>
+
+    <h2 id="admin">5. First admin account</h2>
+    <p>There is no admin sign-up screen yet (the admin panel is a later feature). Register normally on the live site, verify the email, then promote yourself:</p>
+<pre>php artisan tinker --execute 'App\Models\User::where("email", "you@example.com")->update(["role" => "admin"]);'</pre>
+    <ul class="check">
+        <li><input type="checkbox" id="a1"><label for="a1">Admin account created and promoted.</label></li>
+    </ul>
+
+    <h2 id="email">6. Email delivery</h2>
+    <p>The site sends: email verification, password reset, and restricted-post invites.</p>
+    <ul class="check">
+        <li><input type="checkbox" id="m1"><label for="m1">SMTP provider set up (your host's mail, or a service such as Mailgun, Postmark, Amazon SES, Brevo).</label></li>
+        <li><input type="checkbox" id="m2"><label for="m2">DNS records for <code>muallam.com</code>: <strong>SPF</strong>, <strong>DKIM</strong> and <strong>DMARC</strong>, so emails do not land in spam.</label></li>
+        <li><input type="checkbox" id="m3"><label for="m3">Send yourself one of each: sign up (verification), "Forgot password" (reset), and invite yourself to a restricted post from another account (invite). Check links open <code>https://muallam.com/...</code>.</label></li>
+    </ul>
+
+    <h2 id="check">7. Smoke test after going live</h2>
+    <ul class="check">
+        <li><input type="checkbox" id="t1"><label for="t1">Home page, a category, a post, search and an author page load over HTTPS.</label></li>
+        <li><input type="checkbox" id="t2"><label for="t2">Sign up, verify email, sign in, sign out, reset password.</label></li>
+        <li><input type="checkbox" id="t3"><label for="t3">Profile: upload a photo (checks <code>gd</code>, WebP and <code>storage:link</code>), change slug, view the public bio page.</label></li>
+        <li><input type="checkbox" id="t4"><label for="t4">Write a post with a featured image and an image inside the text; Preview; Publish; open it signed out.</label></li>
+        <li><input type="checkbox" id="t5"><label for="t5">Like and comment from a second account; hide a comment as the author.</label></li>
+        <li><input type="checkbox" id="t6"><label for="t6">Restricted post: invite an address you can read, open the link signed out, enter the password, then revoke.</label></li>
+        <li><input type="checkbox" id="t7"><label for="t7">An unknown address shows the styled 404 page, not a Laravel debug page (proves <code>APP_DEBUG=false</code>).</label></li>
+    </ul>
+
+    <h2 id="seo">8. SEO after going live</h2>
+    <ul class="check">
+        <li><input type="checkbox" id="o1"><label for="o1">Open <code>https://muallam.com/robots.txt</code>: it must list the <code>Disallow:</code> rules and the <code>Sitemap:</code> line. If it says only <code>Disallow: /</code>, <code>APP_ENV</code> is not <code>production</code>.</label></li>
+        <li><input type="checkbox" id="o2"><label for="o2">Open <code>https://muallam.com/sitemap.xml</code>: it lists public pages with <code>https://</code> addresses. (It refreshes at most once an hour.)</label></li>
+        <li><input type="checkbox" id="o3"><label for="o3"><strong>Google Search Console</strong>: add and verify <code>muallam.com</code>, then submit <code>https://muallam.com/sitemap.xml</code>.</label></li>
+        <li><input type="checkbox" id="o4"><label for="o4"><strong>Bing Webmaster Tools</strong>: add the site (it can import from Search Console) and submit the sitemap.</label></li>
+        <li><input type="checkbox" id="o5"><label for="o5">Test link previews by pasting a post link into the <strong>Facebook Sharing Debugger</strong> and the <strong>LinkedIn Post Inspector</strong>; then share it on WhatsApp.</label></li>
+        <li><input type="checkbox" id="o6"><label for="o6">Test a post with Google's <strong>Rich Results Test</strong> (checks the article data and breadcrumbs).</label></li>
+        <li><input type="checkbox" id="o7"><label for="o7">Optional: replace <code>public/img/og-default.png</code> (the share image for posts without a featured image) with a designed 1200×630 image with your logo.</label></li>
+    </ul>
+
+    <h2 id="ops">9. Backups and housekeeping</h2>
+    <ul class="check">
+        <li><input type="checkbox" id="b1"><label for="b1">Daily <strong>database</strong> backup (users, posts, comments, likes, invites).</label></li>
+        <li><input type="checkbox" id="b2"><label for="b2">Daily backup of <strong><code>storage/app/public/</code></strong>: all uploaded avatars, featured images and post images live there. The database alone is not enough.</label></li>
+        <li><input type="checkbox" id="b3"><label for="b3">Keep <code>.env</code> (with <code>APP_KEY</code>) in a safe place outside the server.</label></li>
+        <li><input type="checkbox" id="b4"><label for="b4">Watch <code>storage/logs/laravel.log</code> for errors in the first days.</label></li>
+        <li><input type="checkbox" id="b5"><label for="b5">Optional tidy-up: delete <code>AGENTS.md</code> if you do not use other AI tools; trim unused Bootstrap/template files in <code>public/frontend</code> and <code>public/admin</code> once the admin panel is built.</label></li>
+    </ul>
+
+    <h2 id="decide">10. Decisions still open</h2>
+    <table>
+        <tr><th>Topic</th><th>Current behaviour</th><th>Option</th></tr>
+        <tr><td>Time zone</td><td><code>APP_TIMEZONE=UTC</code>: scheduled posts and dates use UTC (shown under the schedule picker).</td><td>Set <code>APP_TIMEZONE=Asia/Karachi</code> so 10:00 means 10:00 local time. Decide <em>before</em> writers schedule posts.</td></tr>
+        <tr><td>Hiding a comment that has replies</td><td>Replies disappear with it but still count in the comment total.</td><td>Make hidden threads uncount their replies.</td></tr>
+        <tr><td>Like button on post cards</td><td>Cards show the count only; liking happens on the post page.</td><td>Add a button to cards.</td></tr>
+        <tr><td>GIF images</td><td>Rejected (the converter would keep only the first frame).</td><td>Store GIFs as-is instead of converting.</td></tr>
+    </table>
+
+    <h2 id="later">11. Features and improvements for later</h2>
+    <h3>Planned next</h3>
+    <ul class="check">
+        <li><input type="checkbox" id="l1"><label for="l1"><strong>Admin panel</strong> (Sneat): dashboard, users, categories, posts and comments. When deleting a user, <strong>recount</strong> likes and comments on the posts they liked or commented on; when deactivating a user, <strong>sign them out immediately</strong> (today they stay signed in until they log out).</label></li>
+        <li><input type="checkbox" id="l2"><label for="l2">Mobile app API (Sanctum tokens, <code>users.fcm_token</code> for push notifications).</label></li>
+    </ul>
+    <h3>Deferred (agreed earlier)</h3>
+    <ul class="check">
+        <li><input type="checkbox" id="l3"><label for="l3">Protect images of private and restricted posts (serve them through a permission check instead of public addresses).</label></li>
+        <li><input type="checkbox" id="l4"><label for="l4">Image captions in the editor; replace the browser's plain "describe this image" pop-up with a styled dialog.</label></li>
+        <li><input type="checkbox" id="l5"><label for="l5">Notifications: someone liked your post, commented, or replied to you.</label></li>
+        <li><input type="checkbox" id="l6"><label for="l6">Per-view log (<code>post_views</code>, like the old project's <code>blog_views</code>); today only <code>views_count</code> is kept, once per visitor session.</label></li>
+        <li><input type="checkbox" id="l7"><label for="l7">Editing comments (for example within 15 minutes of posting).</label></li>
+        <li><input type="checkbox" id="l8"><label for="l8">RSS feed.</label></li>
+        <li><input type="checkbox" id="l9"><label for="l9">Switch search to MySQL full-text search when posts grow into the thousands.</label></li>
+    </ul>
+
+    <p class="muted" style="margin-top:40px">Generated during development, November 2026. Database design: <code>docs/database.md</code>.</p>
+</main>
+</body>
+</html>
