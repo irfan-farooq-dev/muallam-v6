@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -33,11 +34,21 @@ class AppServiceProvider extends ServiceProvider
             ->line('This link expires in '.config('auth.verification.expire', 60).' minutes.')
             ->line("If you didn't create a Muallam account, you can ignore this email."));
 
+        ResetPassword::toMailUsing(fn (object $notifiable, string $token): MailMessage => (new MailMessage)
+            ->subject('Reset your Muallam password')
+            ->greeting("Hi {$notifiable->name},")
+            ->line('We received a request to reset the password for your Muallam account.')
+            ->action('Choose a new password', route('password.reset', ['token' => $token, 'email' => $notifiable->getEmailForPasswordReset()]))
+            ->line('This link expires in '.config('auth.passwords.users.expire', 60).' minutes and can be used once.')
+            ->line("If you didn't ask for this, you can ignore this email. Your password will not change."));
+
         Password::defaults(fn (): Password => Password::min(8)->max(72));
 
         RateLimiter::for('register', fn (Request $request): Limit => Limit::perMinute(10)->by($request->ip()));
 
         // Per-IP ceiling across all emails; LoginRequest also locks each email + IP pair after 5 failures.
+        RateLimiter::for('password-reset', fn (Request $request): Limit => Limit::perMinute(5)->by($request->ip()));
+
         RateLimiter::for('login', fn (Request $request): Limit => Limit::perMinute(20)->by($request->ip()));
     }
 }

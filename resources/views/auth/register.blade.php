@@ -14,7 +14,7 @@
                             <p class="text-secondary mb-4">Add your bio, photo and other details later from your profile.</p>
 
                             <form method="POST" action="{{ route('register.store') }}" novalidate
-                                  x-data="registerForm(@js(['name' => old('name', ''), 'email' => old('email', '')]), @js(collect($errors->getMessages())->map(fn ($messages) => $messages[0])))"
+                                  x-data="authForm(@js(['name' => old('name', ''), 'email' => old('email', ''), 'password' => '', 'password_confirmation' => '']), @js(collect($errors->getMessages())->map(fn ($messages) => $messages[0])))"
                                   @submit="submit($event)">
                                 @csrf
 
@@ -92,95 +92,5 @@
 @endsection
 
 @push('scripts')
-    <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('registerForm', (old, serverErrors) => ({
-                fields: { name: old.name, email: old.email, password: '', password_confirmation: '' },
-                errors: { name: '', email: '', password: '', password_confirmation: '', ...serverErrors },
-                touched: {},
-                showPassword: false,
-                submitting: false,
-
-                init() {
-                    // Fields that came back with a server error count as touched, so they re-check as you type.
-                    Object.keys(serverErrors).forEach((field) => this.touched[field] = true);
-
-                    Object.keys(this.fields).forEach((field) => {
-                        this.$watch(`fields.${field}`, () => {
-                            if (this.touched[field]) this.validate(field);
-                            if (field === 'password' && this.touched.password_confirmation) this.validate('password_confirmation');
-                        });
-                    });
-                },
-
-                touch(field) {
-                    this.touched[field] = true;
-                    this.validate(field);
-                },
-
-                validate(field) {
-                    const value = this.fields[field].trim();
-                    const rules = {
-                        name: () => {
-                            if (!value) return 'Please enter your full name.';
-                            if (value.length < 2) return 'The full name must be at least 2 characters.';
-                            if (!/^[\p{L}\p{M}][\p{L}\p{M}\s.'-]*$/u.test(value)) return 'The name may only contain letters, spaces, dots, apostrophes and hyphens.';
-                            return '';
-                        },
-                        email: () => {
-                            if (!value) return 'Please enter your email.';
-                            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Please enter a valid email address.';
-                            return '';
-                        },
-                        password: () => {
-                            if (!this.fields.password) return 'Please choose a password.';
-                            if (this.fields.password.length < 8) return 'The password must be at least 8 characters.';
-                            return '';
-                        },
-                        password_confirmation: () => {
-                            if (!this.fields.password_confirmation) return 'Please confirm your password.';
-                            if (this.fields.password_confirmation !== this.fields.password) return 'The passwords do not match.';
-                            return '';
-                        },
-                    };
-
-                    this.errors[field] = rules[field]();
-                    return this.errors[field] === '';
-                },
-
-                stateClass(field) {
-                    if (!this.touched[field]) return '';
-                    return this.errors[field] ? 'is-invalid' : 'is-valid';
-                },
-
-                get strength() {
-                    const password = this.fields.password;
-                    let score = 0;
-                    if (password.length >= 8) score++;
-                    if (password.length >= 12) score++;
-                    if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score++;
-                    if (/\d/.test(password)) score++;
-                    if (/[^A-Za-z0-9]/.test(password)) score++;
-
-                    if (password.length < 8 || score <= 2) return { label: 'Weak', percent: 33, barClass: 'bg-danger', textClass: 'text-danger' };
-                    if (score <= 3) return { label: 'Medium', percent: 66, barClass: 'bg-warning', textClass: 'text-warning-emphasis' };
-                    return { label: 'Strong', percent: 100, barClass: 'bg-success', textClass: 'text-success' };
-                },
-
-                submit(event) {
-                    const fields = Object.keys(this.fields);
-                    fields.forEach((field) => this.touched[field] = true);
-                    const valid = fields.map((field) => this.validate(field)).every(Boolean);
-
-                    if (!valid) {
-                        event.preventDefault();
-                        document.getElementById(fields.find((field) => this.errors[field]))?.focus();
-                        return;
-                    }
-
-                    this.submitting = true;
-                },
-            }));
-        });
-    </script>
+    <script src="{{ asset('js/auth-form.js') }}"></script>
 @endpush
