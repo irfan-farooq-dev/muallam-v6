@@ -39,11 +39,11 @@
     <nav class="toc">
         <strong>Contents</strong>
         <ol>
-            <li><a href="#server">Server requirements</a></li>
+            <li><a href="#server">Hosting (cPanel)</a></li>
             <li><a href="#env">Production <code>.env</code></a></li>
-            <li><a href="#deploy">Deployment commands</a></li>
+            <li><a href="#deploy">Upload and deploy</a></li>
             <li><a href="#cron">Scheduler (cron)</a></li>
-            <li><a href="#admin">First admin account</a></li>
+            <li><a href="#admin">Members and the first admin</a></li>
             <li><a href="#email">Email delivery</a></li>
             <li><a href="#check">Smoke test after going live</a></li>
             <li><a href="#seo">SEO after going live</a></li>
@@ -53,84 +53,96 @@
         </ol>
     </nav>
 
-    <h2 id="server">1. Server requirements</h2>
+    <h2 id="server">1. Hosting (cPanel)</h2>
+    <p>muallam.com is on cPanel shared hosting without a terminal: <strong>PHP 8.4</strong> and <strong>MariaDB 10.11</strong> (seen in the old database export). Everything below is done from cPanel, File Manager and phpMyAdmin. Throughout, <code>CPANELUSER</code> stands for your cPanel username, so the home folder is <code>/home/CPANELUSER</code>.</p>
+    <p>Layout on the server: the app goes in <code>/home/CPANELUSER/muallam</code> (outside the web root, so <code>.env</code> and the code can never be downloaded) and only the public files go in <code>/home/CPANELUSER/public_html</code>.</p>
     <ul class="check">
-        <li><input type="checkbox" id="s1"><label for="s1">PHP <strong>8.3 or newer</strong> (developed on 8.4) with extensions: <code>gd</code> <strong>with WebP support</strong> (all image resizing uses it), <code>pdo_mysql</code>, <code>mbstring</code>, <code>fileinfo</code>, <code>openssl</code>, <code>tokenizer</code>, <code>xml</code>, <code>ctype</code>, <code>bcmath</code>. <code>exif</code> is optional (straightens sideways phone photos).</label></li>
-        <li><input type="checkbox" id="s2"><label for="s2">MySQL 8.x or newer (developed on 9.7), database created with <code>utf8mb4</code> / <code>utf8mb4_0900_ai_ci</code>.</label></li>
-        <li><input type="checkbox" id="s3"><label for="s3">Web server <strong>document root points to the <code>public/</code> folder</strong>, not the project root.</label></li>
-        <li><input type="checkbox" id="s4"><label for="s4">PHP upload limits: <code>upload_max_filesize</code> at least <code>6M</code> and <code>post_max_size</code> at least <code>10M</code> (images up to 5 MB, featured image up to 4 MB, sent together with the post).</label></li>
-        <li><input type="checkbox" id="s5"><label for="s5"><code>storage/</code> and <code>bootstrap/cache/</code> writable by the web server user.</label></li>
-        <li><input type="checkbox" id="s6"><label for="s6"><strong>HTTPS certificate</strong> installed; <code>http://</code> and <code>www.</code> redirect to <code>https://muallam.com</code>.</label></li>
-        <li><input type="checkbox" id="s7"><label for="s7">No Node/npm needed: the site has no build step. Composer is needed.</label></li>
+        <li><input type="checkbox" id="s1"><label for="s1"><strong>Select PHP Version</strong> (or MultiPHP Manager): PHP <strong>8.4</strong> for muallam.com, with extensions <code>gd</code> (needs <strong>WebP</strong> support; all image resizing uses it), <code>pdo_mysql</code>, <code>mbstring</code>, <code>fileinfo</code>, <code>openssl</code>, <code>tokenizer</code>, <code>xml</code>, <code>ctype</code>, <code>bcmath</code>, and optionally <code>exif</code> (straightens sideways phone photos).</label></li>
+        <li><input type="checkbox" id="s2"><label for="s2">PHP options: <code>upload_max_filesize</code> at least <code>6M</code>, <code>post_max_size</code> at least <code>10M</code>.</label></li>
+        <li><input type="checkbox" id="s3"><label for="s3"><strong>MySQL Databases</strong>: create a new database (e.g. <code>CPANELUSER_muallam</code>) and a user with all privileges on it. Also add that user to the <strong>old</strong> database (so the old members can be copied), or put the old database's own login in <code>LEGACY_DB_USERNAME</code>/<code>LEGACY_DB_PASSWORD</code>. Keep the old database until the import has run.</label></li>
+        <li><input type="checkbox" id="s4"><label for="s4"><strong>SSL/TLS Status</strong>: certificate installed (AutoSSL). <code>http://</code> and <code>www.</code> should end on <code>https://muallam.com</code> (cPanel <strong>Domains</strong> &rsaquo; Force HTTPS Redirect).</label></li>
+        <li><input type="checkbox" id="s5"><label for="s5"><strong>Back up and clear the old site</strong>: download a copy of <code>public_html</code> and the old app folder (FileZilla or File Manager &rsaquo; Compress), then empty <code>public_html</code> (keep <code>.well-known</code> and <code>cgi-bin</code> if present).</label></li>
     </ul>
 
     <h2 id="env">2. Production <code>.env</code></h2>
-    <p>Copy <code>.env.example</code> to <code>.env</code> on the server and set at least:</p>
+    <p>On your Mac, make the app key (never reuse the local one): <code>php artisan key:generate --show</code>. Then after the first upload (section 3) create <code>/home/CPANELUSER/muallam/.env</code> in File Manager with:</p>
 <pre>APP_NAME=Muallam
 APP_ENV=production          # also switches robots.txt to "welcome crawlers"
+APP_KEY=base64:...          # from key:generate --show
 APP_DEBUG=false             # never true on the live site
 APP_URL=https://muallam.com # used in emails, sitemap, share links
 APP_TIMEZONE=UTC            # see "Decisions still open"
+LOG_LEVEL=warning
 
 DB_CONNECTION=mysql
-DB_HOST=...
+DB_HOST=localhost
 DB_PORT=3306
-DB_DATABASE=...
-DB_USERNAME=...
+DB_DATABASE=CPANELUSER_muallam
+DB_USERNAME=CPANELUSER_...
 DB_PASSWORD=...
+
+# Old site's database: its members are copied on the first deploy. Remove these lines afterwards.
+LEGACY_DB_DATABASE=CPANELUSER_...   # name of the OLD database
+# LEGACY_DB_USERNAME=...            # only if the user above has no access to it
+# LEGACY_DB_PASSWORD=...
+
+# public_html is not inside the app folder, so the image link needs the full path.
+PUBLIC_STORAGE_LINK=/home/CPANELUSER/public_html/storage
 
 SESSION_DRIVER=database
 SESSION_SECURE_COOKIE=true
-CACHE_STORE=database
+CACHE_STORE=file            # file, not database: the scheduler must work before the tables exist
 QUEUE_CONNECTION=database
 
 MAIL_MAILER=smtp
-MAIL_HOST=...
-MAIL_PORT=587
-MAIL_USERNAME=...
+MAIL_SCHEME=smtps
+MAIL_HOST=mail.muallam.com
+MAIL_PORT=465
+MAIL_USERNAME=no-reply@muallam.com
 MAIL_PASSWORD=...
 MAIL_FROM_ADDRESS="no-reply@muallam.com"
 MAIL_FROM_NAME="Muallam"</pre>
     <ul class="check">
-        <li><input type="checkbox" id="e1"><label for="e1">Generate a new key on the server: <code>php artisan key:generate</code> (never reuse the local key). Keep a safe copy: if it is lost, sessions and remember-me cookies stop working.</label></li>
-        <li><input type="checkbox" id="e2"><label for="e2">Check <code>APP_DEBUG=false</code> and <code>APP_ENV=production</code> before opening the site.</label></li>
+        <li><input type="checkbox" id="e1"><label for="e1"><code>.env</code> created with a new <code>APP_KEY</code>. Keep a safe copy of the whole file outside the server: if the key is lost, sessions and remember-me cookies stop working.</label></li>
+        <li><input type="checkbox" id="e2"><label for="e2"><code>APP_DEBUG=false</code>, <code>APP_ENV=production</code> and <code>CACHE_STORE=file</code> double-checked.</label></li>
+        <li><input type="checkbox" id="e3"><label for="e3"><strong>Changing <code>.env</code> later</strong>: settings are cached, so they only apply after a deploy. Without a new upload, edit <code>muallam/RELEASE</code> in File Manager (add <code>-1</code> to the end of the line); the scheduler redeploys within a minute.</label></li>
     </ul>
 
-    <h2 id="deploy">3. Deployment commands</h2>
-    <p>Run from the project folder on the server, in this order:</p>
-<pre>composer install --no-dev --optimize-autoloader
-php artisan key:generate              # first deploy only
-php artisan migrate --force
-php artisan db:seed --class=CategorySeeder --force
-php artisan storage:link              # makes uploaded images reachable
-php artisan optimize                  # caches config, routes, views, events</pre>
-    <div class="note"><strong>Never run plain <code>php artisan db:seed</code> or <code>migrate:fresh --seed</code> on the live site.</strong> The default seeder creates demo users (password <code>password</code>) and fake posts. Only <code>CategorySeeder</code> is safe; it can be run again any time and never deletes anything.</div>
+    <h2 id="deploy">3. Upload and deploy</h2>
+    <p>Build the upload zip on your Mac from committed code (it includes the Composer packages, so the server needs no Composer or terminal):</p>
+<pre>php artisan site:package</pre>
+    <p>It creates <code>muallam-deploy/muallam-&lt;commit&gt;-&lt;time&gt;.zip</code> next to the project, holding two folders: <code>muallam/</code> (the app) and <code>public_html/</code> (the public files, already pointed at <code>../muallam</code>). Uncommitted changes are not included.</p>
     <ul class="check">
-        <li><input type="checkbox" id="d1"><label for="d1">After every later deploy: <code>composer install --no-dev --optimize-autoloader</code>, <code>php artisan migrate --force</code>, <code>php artisan optimize</code>.</label></li>
-        <li><input type="checkbox" id="d2"><label for="d2">If you change <code>.env</code> later, run <code>php artisan optimize</code> again (config is cached).</label></li>
+        <li><input type="checkbox" id="d1"><label for="d1">File Manager: upload the zip to <code>/home/CPANELUSER</code> (the home folder, not inside <code>public_html</code>) and <strong>Extract</strong> it there. Then delete the zip.</label></li>
+        <li><input type="checkbox" id="d2"><label for="d2">First time only: create <code>muallam/.env</code> (section 2) and add the cron job (section 4).</label></li>
+        <li><input type="checkbox" id="d3"><label for="d3">Within a minute the scheduler runs <code>site:deploy</code>: database tables, categories, old members (while <code>LEGACY_DB_DATABASE</code> is set), the <code>public_html/storage</code> image link and the caches. Read the result in <code>muallam/storage/logs/deploy.log</code>; it must end with <em>Release ... deployed.</em> A failed step is retried every minute until fixed.</label></li>
+        <li><input type="checkbox" id="d4"><label for="d4">After the first deploy: check the log lists the imported members, then remove the <code>LEGACY_DB_...</code> lines from <code>.env</code>.</label></li>
+        <li><input type="checkbox" id="d5"><label for="d5"><strong>Later updates</strong>: commit, run <code>php artisan site:package</code>, upload and extract the new zip over the old folders (Overwrite). The new <code>RELEASE</code> file makes the scheduler deploy it. Keep the previous zip: extracting it again rolls back the code (database changes are not undone).</label></li>
     </ul>
+    <div class="note"><strong>Never run plain <code>php artisan db:seed</code> or <code>migrate:fresh --seed</code> on the live site.</strong> The default seeder creates demo users (password <code>password</code>) and fake posts, and the live package does not even include the tools it needs. <code>site:deploy</code> only runs the safe <code>CategorySeeder</code>, which never deletes anything.</div>
 
     <h2 id="cron">4. Scheduler (cron)</h2>
-    <p>One cron line runs Laravel's scheduler every minute. Today it runs <code>posts:prune-images</code> daily at midnight (deletes editor uploads never saved into a post, older than 24 hours).</p>
-<pre>* * * * * cd /path/to/muallam && php artisan schedule:run >> /dev/null 2>&amp;1</pre>
+    <p>cPanel &rsaquo; <strong>Cron Jobs</strong> &rsaquo; Add New Cron Job, <em>Once Per Minute</em> (<code>* * * * *</code>), command:</p>
+<pre>cd /home/CPANELUSER/muallam &amp;&amp; /opt/alt/php84/usr/bin/php artisan schedule:run &gt;&gt; /dev/null 2&gt;&amp;1</pre>
+    <p>It finishes deploys (every minute, only when a new release was uploaded) and runs <code>posts:prune-images</code> daily at midnight (deletes editor uploads never saved into a post). The PHP path depends on the host: <code>/opt/alt/php84/usr/bin/php</code> on CloudLinux (this host's MariaDB says <code>cll-lve</code>, so likely), otherwise <code>/usr/local/bin/ea-php84</code> or <code>/usr/local/bin/php</code>.</p>
     <ul class="check">
-        <li><input type="checkbox" id="c1"><label for="c1">Cron line added (replace <code>/path/to/muallam</code>).</label></li>
-        <li><input type="checkbox" id="c2"><label for="c2">Check it is picked up: <code>php artisan schedule:list</code> shows <code>posts:prune-images</code>.</label></li>
+        <li><input type="checkbox" id="c1"><label for="c1">Cron job added with your username and the right PHP path.</label></li>
+        <li><input type="checkbox" id="c2"><label for="c2">It works: <code>muallam/storage/logs/deploy.log</code> appears within a minute or two. If not, temporarily replace <code>&gt;&gt; /dev/null 2&gt;&amp;1</code> with <code>&gt;&gt; /home/CPANELUSER/cron.log 2&gt;&amp;1</code> to see the error (usually a wrong PHP path or a PHP older than 8.3), and put it back afterwards.</label></li>
     </ul>
 
-    <h2 id="admin">5. First admin account</h2>
-    <p>There is no admin sign-up screen (on purpose). Register normally on the live site, verify the email, then promote yourself once:</p>
-<pre>php artisan tinker --execute 'App\Models\User::where("email", "you@example.com")->update(["role" => "admin"]);'</pre>
+    <h2 id="admin">5. Members and the first admin</h2>
+    <p>The first deploy copies the old site's members. They keep their passwords (old addresses such as <code>/abu-hashim/blogs</code> redirect to the new author pages). Skipped on purpose: one scam account and five bot sign-ups with random-letter names. No old email address was ever verified, so members confirm theirs from the dashboard before they can write.</p>
+    <p>The old <strong>admin@muallam.com</strong> ("Admin User") becomes an admin with the address <code>/users/admin-user</code>.</p>
     <ul class="check">
-        <li><input type="checkbox" id="a1"><label for="a1">Admin account created and promoted.</label></li>
-        <li><input type="checkbox" id="a2"><label for="a2">Open <code>https://muallam.com/admin</code> and check the dashboard loads. Further admins can then be made from Admin &rsaquo; Users (no tinker needed).</label></li>
+        <li><input type="checkbox" id="a1"><label for="a1">Sign in as admin@muallam.com with its old password (or use "Forgot password" once email works), and open <code>https://muallam.com/admin</code>.</label></li>
+        <li><input type="checkbox" id="a2"><label for="a2">Make your own account an admin from Admin &rsaquo; Users. (No admin can sign in? phpMyAdmin &rsaquo; SQL: <code>UPDATE users SET role = 'admin' WHERE email = 'you@example.com';</code>)</label></li>
     </ul>
 
     <h2 id="email">6. Email delivery</h2>
     <p>The site sends: email verification, password reset, and restricted-post invites.</p>
     <ul class="check">
-        <li><input type="checkbox" id="m1"><label for="m1">SMTP provider set up (your host's mail, or a service such as Mailgun, Postmark, Amazon SES, Brevo).</label></li>
-        <li><input type="checkbox" id="m2"><label for="m2">DNS records for <code>muallam.com</code>: <strong>SPF</strong>, <strong>DKIM</strong> and <strong>DMARC</strong>, so emails do not land in spam.</label></li>
+        <li><input type="checkbox" id="m1"><label for="m1">cPanel &rsaquo; <strong>Email Accounts</strong>: create <code>no-reply@muallam.com</code> and use its password in <code>MAIL_PASSWORD</code>. Connect Devices shows the SMTP host and port (usually <code>mail.muallam.com</code>, 465 SSL).</label></li>
+        <li><input type="checkbox" id="m2"><label for="m2">cPanel &rsaquo; <strong>Email Deliverability</strong>: SPF and DKIM show as valid (use Repair if not). Add a DMARC record too, so emails do not land in spam.</label></li>
         <li><input type="checkbox" id="m3"><label for="m3">Send yourself one of each: sign up (verification), "Forgot password" (reset), and invite yourself to a restricted post from another account (invite). Check links open <code>https://muallam.com/...</code>.</label></li>
     </ul>
 
@@ -158,11 +170,11 @@ php artisan optimize                  # caches config, routes, views, events</pr
 
     <h2 id="ops">9. Backups and housekeeping</h2>
     <ul class="check">
-        <li><input type="checkbox" id="b1"><label for="b1">Daily <strong>database</strong> backup (users, posts, comments, likes, invites).</label></li>
-        <li><input type="checkbox" id="b2"><label for="b2">Daily backup of <strong><code>storage/app/public/</code></strong>: all uploaded avatars, featured images and post images live there. The database alone is not enough.</label></li>
+        <li><input type="checkbox" id="b1"><label for="b1">Daily <strong>database</strong> backup (users, posts, comments, likes, invites). cPanel &rsaquo; Backup, or JetBackup if the host offers it.</label></li>
+        <li><input type="checkbox" id="b2"><label for="b2">Daily backup of <strong><code>muallam/storage/app/public/</code></strong>: all uploaded avatars, featured images and post images live there. The database alone is not enough.</label></li>
         <li><input type="checkbox" id="b3"><label for="b3">Keep <code>.env</code> (with <code>APP_KEY</code>) in a safe place outside the server.</label></li>
-        <li><input type="checkbox" id="b4"><label for="b4">Watch <code>storage/logs/laravel.log</code> for errors in the first days.</label></li>
-        <li><input type="checkbox" id="b5"><label for="b5">Optional tidy-up: delete <code>AGENTS.md</code> if you do not use other AI tools; trim unused Bootstrap/template files in <code>public/frontend</code> and <code>public/admin</code> once the admin panel is built.</label></li>
+        <li><input type="checkbox" id="b4"><label for="b4">Watch <code>muallam/storage/logs/laravel.log</code> for errors in the first days.</label></li>
+        <li><input type="checkbox" id="b5"><label for="b5">Optional tidy-up: delete <code>AGENTS.md</code> if you do not use other AI tools; trim unused Bootstrap/template files in <code>public/frontend</code> and <code>public/admin</code> to make the upload smaller. Once the import has run, the old database can be deleted (keep a downloaded copy).</label></li>
     </ul>
 
     <h2 id="decide">10. Decisions still open</h2>
