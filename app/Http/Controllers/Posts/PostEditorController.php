@@ -8,6 +8,7 @@ use App\Http\Requests\Posts\SavePostRequest;
 use App\Models\Category;
 use App\Models\Post;
 use App\Services\FeaturedImageProcessor;
+use App\Services\PostImageStore;
 use App\Services\PostSlugGenerator;
 use Carbon\CarbonInterface;
 use Illuminate\Http\RedirectResponse;
@@ -16,7 +17,10 @@ use Illuminate\View\View;
 
 class PostEditorController extends Controller
 {
-    public function __construct(private FeaturedImageProcessor $featuredImages) {}
+    public function __construct(
+        private FeaturedImageProcessor $featuredImages,
+        private PostImageStore $bodyImages,
+    ) {}
 
     public function create(): View
     {
@@ -34,6 +38,7 @@ class PostEditorController extends Controller
         }
 
         $post->save();
+        $this->bodyImages->syncWithBody($post, $request->user());
 
         return redirect()->route('posts.edit', $post)->with('success', $this->savedMessage($post, 'created'));
     }
@@ -58,6 +63,7 @@ class PostEditorController extends Controller
         }
 
         $post->save();
+        $this->bodyImages->syncWithBody($post, $request->user());
 
         $message = $wasLive && $post->status === PostStatus::Draft
             ? 'Post unpublished. It is a draft again, so only you can see it.'
@@ -69,6 +75,7 @@ class PostEditorController extends Controller
     public function destroy(Post $post): RedirectResponse
     {
         $this->featuredImages->delete($post->featured_image);
+        $this->bodyImages->deleteAllFor($post);
         $post->delete();
 
         return redirect()->route('posts.mine')->with('success', "\"{$post->title}\" was deleted.");

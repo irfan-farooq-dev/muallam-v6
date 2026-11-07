@@ -27,6 +27,7 @@
             'summary' => old('summary', $post->summary ?? ''),
             'featuredImage' => $post->featuredImageUrl(),
             'isLive' => $isLive,
+            'imageUploadUrl' => route('posts.images.store'),
         ];
     @endphp
 
@@ -81,6 +82,11 @@
                         <div x-ref="editor" aria-labelledby="body-label"></div>
                     </div>
                     <input type="hidden" name="body" x-ref="body">
+                    <input type="file" accept="image/jpeg,image/png,image/webp" class="d-none" x-ref="inlineImage" @change="chooseInlineImage($event)">
+                    <div class="small text-secondary mt-1" x-show="uploading > 0" x-cloak>
+                        <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>Uploading image…
+                    </div>
+                    <div class="field-error" x-show="imageError" x-text="imageError" x-cloak></div>
                     <div class="field-error">{{ $errors->first('body') }}</div>
                 </div>
             </div>
@@ -164,11 +170,11 @@
                 </div>
 
                 <div class="d-grid gap-2">
-                    <button type="submit" value="publish" class="btn btn-accent btn-lg" :disabled="submitting">
+                    <button type="submit" value="publish" class="btn btn-accent btn-lg" :disabled="submitting || uploading > 0">
                         <span x-show="submitting === 'publish'" x-cloak class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
                         <span x-text="publishLabel">Publish</span>
                     </button>
-                    <button type="submit" value="draft" class="btn btn-outline-accent" :disabled="submitting">
+                    <button type="submit" value="draft" class="btn btn-outline-accent" :disabled="submitting || uploading > 0">
                         <span x-show="submitting === 'draft'" x-cloak class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
                         <span x-text="isLive ? 'Unpublish (back to draft)' : 'Save draft'">Save draft</span>
                     </button>
@@ -205,6 +211,8 @@
                 schedule: initial.schedule,
                 scheduledAt: initial.scheduledAt,
                 isLive: initial.isLive,
+                uploading: 0,
+                imageError: '',
                 summary: initial.summary,
                 preview: initial.featuredImage,
                 removeImage: false,
@@ -222,11 +230,18 @@
                                 ['blockquote', 'code-block'],
                                 [{ list: 'ordered' }, { list: 'bullet' }],
                                 [{ align: [] }],
-                                ['link'],
+                                ['link', 'image'],
                                 ['clean'],
                             ],
+                            // Pasted or dropped image files are uploaded instead of being embedded as huge base64 text.
+                            uploader: {
+                                mimetypes: ['image/jpeg', 'image/png', 'image/webp'],
+                                handler: (range, files) => files.forEach((file, offset) => this.uploadImage(file, range.index + offset)),
+                            },
                         },
                     });
+
+                    quill.getModule('toolbar').addHandler('image', () => this.$refs.inlineImage.click());
 
                     if (initial.body) {
                         quill.clipboard.dangerouslyPasteHTML(initial.body, 'silent');
@@ -238,6 +253,47 @@
                             event.preventDefault();
                         }
                     });
+                },
+
+                async uploadImage(file, index, alt = '') {
+                    this.uploading++;
+                    const form = new FormData();
+                    form.append('image', file);
+                    if (alt) form.append('alt', alt);
+
+                    try {
+                        const response = await fetch(initial.imageUploadUrl, {
+                            method: 'POST',
+                            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content, Accept: 'application/json' },
+                            body: form,
+                        });
+                        const result = await response.json();
+
+                        if (!response.ok) {
+                            const errors = result.errors ? Object.values(result.errors).flat() : [result.message];
+                            this.imageError = errors[0] || 'The image could not be uploaded.';
+                            return;
+                        }
+
+                        quill.insertEmbed(index, 'image', result.url, 'user');
+                        quill.formatText(index, 1, { alt: result.alt || '', width: String(result.width), height: String(result.height) }, 'user');
+                        quill.setSelection(index + 1, 0, 'silent');
+                        this.imageError = '';
+                    } catch {
+                        this.imageError = 'The image could not be uploaded. Check your connection and try again.';
+                    } finally {
+                        this.uploading--;
+                    }
+                },
+
+                chooseInlineImage(event) {
+                    const file = event.target.files[0];
+                    event.target.value = '';
+                    if (!file) return;
+
+                    const alt = window.prompt('Briefly describe this image (helps screen readers and search engines). You can leave it empty.', '') ?? '';
+                    const range = quill.getSelection(true);
+                    this.uploadImage(file, range ? range.index : quill.getLength(), alt.trim());
                 },
 
                 get publishLabel() {

@@ -10,6 +10,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Posts\MyPostsController;
 use App\Http\Controllers\Posts\PostEditorController;
+use App\Http\Controllers\Posts\PostImageUploadController;
 use App\Http\Controllers\Posts\PostPreviewController;
 use App\Http\Controllers\Profile\PasswordController;
 use App\Http\Controllers\Profile\ProfileController;
@@ -73,6 +74,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // The edit form spoofs PUT, so the preview button (which reuses that form) can arrive as POST or PUT.
     Route::match(['post', 'put'], 'posts/preview', PostPreviewController::class)->name('posts.preview');
     Route::get('posts/preview', fn () => to_route('posts.mine')->with('info', 'Previews open from the Preview button in the editor and are not saved.'));
+    Route::post('posts/images', PostImageUploadController::class)->middleware('throttle:30,1')->name('posts.images.store');
     Route::get('posts/create', [PostEditorController::class, 'create'])->can('create', Post::class)->name('posts.create');
     Route::post('posts', [PostEditorController::class, 'store'])->can('create', Post::class)->name('posts.store');
     Route::get('posts/{post}/edit', [PostEditorController::class, 'edit'])->can('update', 'post')->name('posts.edit');
