@@ -45,6 +45,7 @@ class PostEditorController extends Controller
 
     public function update(SavePostRequest $request, Post $post): RedirectResponse
     {
+        $wasLive = $post->status === PostStatus::Published && ! $post->isScheduled();
         $post->fill($this->postAttributes($request, $post));
 
         if ($request->boolean('remove_featured_image') || $request->hasFile('featured_image')) {
@@ -58,7 +59,11 @@ class PostEditorController extends Controller
 
         $post->save();
 
-        return redirect()->route('posts.edit', $post)->with('success', $this->savedMessage($post, 'saved'));
+        $message = $wasLive && $post->status === PostStatus::Draft
+            ? 'Post unpublished. It is a draft again, so only you can see it.'
+            : $this->savedMessage($post, 'saved');
+
+        return redirect()->route('posts.edit', $post)->with('success', $message);
     }
 
     public function destroy(Post $post): RedirectResponse
@@ -74,7 +79,7 @@ class PostEditorController extends Controller
         return view('member.posts.form', [
             'post' => $post,
             'categories' => Category::query()->active()->get(['id', 'name']),
-            'statuses' => SavePostRequest::editableStatuses($post),
+            'defaultCategoryId' => Category::default()?->id,
         ]);
     }
 

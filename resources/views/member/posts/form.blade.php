@@ -13,27 +13,45 @@
 @section('member_content')
     @php
         $isScheduled = $post->isScheduled();
+        $isLive = $post->exists && $post->status === \App\Enums\PostStatus::Published && ! $isScheduled;
+        $isRestricted = $post->status === \App\Enums\PostStatus::Restricted;
         $initial = [
             'body' => old('body', $post->body ?? ''),
-            'status' => old('status', $post->status?->value ?? 'draft'),
-            'publishOption' => old('publish_option', $isScheduled ? 'schedule' : 'now'),
+            'visibility' => old('visibility', match ($post->status) {
+                \App\Enums\PostStatus::Private => 'private',
+                \App\Enums\PostStatus::Restricted => 'restricted',
+                default => 'public',
+            }),
+            'schedule' => (bool) old('schedule', $isScheduled),
             'scheduledAt' => old('scheduled_at', $isScheduled ? $post->published_at->format('Y-m-d\TH:i') : ''),
             'summary' => old('summary', $post->summary ?? ''),
             'featuredImage' => $post->featuredImageUrl(),
+            'isLive' => $isLive,
         ];
     @endphp
 
     @if ($errors->any())
-        <div class="alert alert-danger">Please fix the highlighted fields below.</div>
+        <div class="alert alert-danger">
+            Please fix the highlighted fields below.
+            {{-- Errors for inputs that have no visible field of their own (e.g. the clicked button). --}}
+            @foreach (['action', 'status', 'publish_option', 'allow_comments', 'remove_featured_image'] as $hiddenField)
+                @error($hiddenField)
+                    <div class="small mt-1">{{ $message }}</div>
+                @enderror
+            @endforeach
+        </div>
     @endif
 
     <form method="POST" enctype="multipart/form-data" novalidate
           action="{{ $post->exists ? route('posts.update', $post) : route('posts.store') }}"
-          x-data="postEditor(@js($initial))" @submit="beforeSubmit()">
+          x-data="postEditor(@js($initial))" @submit="beforeSubmit($event)">
         @csrf
         @if ($post->exists)
             @method('PUT')
+            <input type="hidden" name="preview_post" value="{{ $post->slug }}">
         @endif
+        {{-- Filled from the clicked button. Disabled buttons are not sent by browsers, and the buttons are disabled while saving. --}}
+        <input type="hidden" name="action" x-ref="action" value="publish">
 
         <div class="row g-4">
             <div class="col-xl-8">
@@ -70,30 +88,38 @@
             <div class="col-xl-4">
                 <div class="card settings-card mb-3">
                     <div class="card-body">
-                        <h3 class="h6 mb-3">Publishing</h3>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h3 class="h6 mb-0">Publishing</h3>
+                            @if ($post->exists)
+                                <x-post-status-badge :post="$post" />
+                            @endif
+                        </div>
 
-                        <label for="status" class="form-label small text-secondary mb-1">Status</label>
-                        <select id="status" name="status" class="form-select mb-3" x-model="status" @change="dirty = true">
-                            @foreach ($statuses as $status)
-                                <option value="{{ $status->value }}">{{ $status->label() }}</option>
-                            @endforeach
-                        </select>
-                        <p class="small text-secondary mb-3" x-show="status === 'draft'">Only you can see drafts.</p>
-                        <p class="small text-secondary mb-3" x-show="status === 'private'" x-cloak>Only you (and site admins) can see private posts.</p>
-                        <p class="small text-secondary mb-3" x-show="status === 'restricted'" x-cloak>Only you and admins can see it for now. Sharing it with invited readers arrives in a later update.</p>
-
-                        <div x-show="status === 'published'" x-cloak>
+                        <div class="mb-3">
+                            <span class="form-label small text-secondary d-block mb-1">Who can read it once published?</span>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="publish_option" id="publish_now" value="now" x-model="publishOption" @change="dirty = true">
-                                <label class="form-check-label" for="publish_now">
-                                    {{ $post->exists && $post->status === \App\Enums\PostStatus::Published && ! $isScheduled ? 'Keep it live' : 'Publish now' }}
-                                </label>
+                                <input class="form-check-input" type="radio" name="visibility" id="visibility_public" value="public" x-model="visibility" @change="dirty = true">
+                                <label class="form-check-label" for="visibility_public">Everyone <span class="text-secondary small">(public)</span></label>
                             </div>
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio" name="publish_option" id="publish_schedule" value="schedule" x-model="publishOption" @change="dirty = true">
-                                <label class="form-check-label" for="publish_schedule">Schedule for later</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="visibility" id="visibility_private" value="private" x-model="visibility" @change="dirty = true">
+                                <label class="form-check-label" for="visibility_private">Only me <span class="text-secondary small">(private)</span></label>
                             </div>
-                            <div x-show="publishOption === 'schedule'" x-cloak>
+                            @if ($isRestricted)
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="visibility" id="visibility_restricted" value="restricted" x-model="visibility" @change="dirty = true">
+                                    <label class="form-check-label" for="visibility_restricted">Restricted <span class="text-secondary small">(sharing arrives later)</span></label>
+                                </div>
+                            @endif
+                            <div class="field-error">{{ $errors->first('visibility') ?: $errors->first('status') }}</div>
+                        </div>
+
+                        <div class="mb-3" x-show="visibility === 'public'">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="schedule" name="schedule" value="1" x-model="schedule" @change="dirty = true">
+                                <label class="form-check-label" for="schedule">Schedule for later</label>
+                            </div>
+                            <div x-show="schedule" x-cloak class="mt-2">
                                 <input type="datetime-local" name="scheduled_at" x-model="scheduledAt" @change="dirty = true"
                                        @class(['form-control form-control-sm', 'is-invalid' => $errors->has('scheduled_at')])
                                        aria-label="Go-live date and time">
@@ -101,13 +127,11 @@
                             </div>
                             <div class="field-error">{{ $errors->first('scheduled_at') }}</div>
                         </div>
-                        <div class="field-error">{{ $errors->first('status') }}</div>
 
-                        <label for="category_id" class="form-label small text-secondary mb-1 mt-2">Category</label>
-                        <select id="category_id" name="category_id" @class(['form-select', 'is-invalid' => $errors->has('category_id')]) @change="dirty = true">
-                            <option value="">Uncategorised</option>
+                        <label for="category_id" class="form-label small text-secondary mb-1">Category</label>
+                        <select id="category_id" name="category_id" required @class(['form-select', 'is-invalid' => $errors->has('category_id')]) @change="dirty = true">
                             @foreach ($categories as $category)
-                                <option value="{{ $category->id }}" @selected((string) old('category_id', $post->category_id) === (string) $category->id)>{{ $category->name }}</option>
+                                <option value="{{ $category->id }}" @selected((string) old('category_id', $post->category_id ?? $defaultCategoryId) === (string) $category->id)>{{ $category->name }}</option>
                             @endforeach
                         </select>
                         <div class="field-error">{{ $errors->first('category_id') }}</div>
@@ -139,10 +163,21 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-accent btn-lg w-100" :disabled="submitting">
-                    <span x-show="submitting" x-cloak class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
-                    <span x-text="submitLabel">Save</span>
-                </button>
+                <div class="d-grid gap-2">
+                    <button type="submit" value="publish" class="btn btn-accent btn-lg" :disabled="submitting">
+                        <span x-show="submitting === 'publish'" x-cloak class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                        <span x-text="publishLabel">Publish</span>
+                    </button>
+                    <button type="submit" value="draft" class="btn btn-outline-accent" :disabled="submitting">
+                        <span x-show="submitting === 'draft'" x-cloak class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                        <span x-text="isLive ? 'Unpublish (back to draft)' : 'Save draft'">Save draft</span>
+                    </button>
+                    <button type="submit" value="preview" class="btn btn-link"
+                            formaction="{{ route('posts.preview') }}" formtarget="_blank" formnovalidate>
+                        <i class="bi bi-eye me-1"></i>Preview
+                    </button>
+                </div>
+                <p class="small text-secondary mt-2 mb-0" x-text="publishHint"></p>
             </div>
         </div>
     </form>
@@ -166,9 +201,10 @@
                 let quill = null;
 
                 return {
-                status: initial.status,
-                publishOption: initial.publishOption,
+                visibility: initial.visibility,
+                schedule: initial.schedule,
                 scheduledAt: initial.scheduledAt,
+                isLive: initial.isLive,
                 summary: initial.summary,
                 preview: initial.featuredImage,
                 removeImage: false,
@@ -204,9 +240,18 @@
                     });
                 },
 
-                get submitLabel() {
-                    if (this.status === 'published') return this.publishOption === 'schedule' ? 'Schedule' : 'Publish';
-                    return this.status === 'private' ? 'Save privately' : 'Save draft';
+                get publishLabel() {
+                    if (this.visibility === 'private') return 'Save as private';
+                    if (this.visibility === 'restricted') return 'Save as restricted';
+                    if (this.schedule) return 'Schedule';
+                    return this.isLive ? 'Update' : 'Publish';
+                },
+
+                get publishHint() {
+                    if (this.visibility === 'private') return 'Private posts are only visible to you.';
+                    if (this.visibility === 'restricted') return 'Restricted posts are only visible to you for now.';
+                    if (this.schedule) return 'The post goes live automatically at the chosen time.';
+                    return this.isLive ? 'Saves your changes to the live post.' : 'Publishing makes the post visible to everyone right away.';
                 },
 
                 chooseImage(event) {
@@ -223,10 +268,19 @@
                     this.dirty = true;
                 },
 
-                beforeSubmit() {
+                beforeSubmit(event) {
                     // Quill 2.0.3's getSemanticHTML() turns every space into &nbsp;, which stops lines wrapping. Undo that.
                     this.$refs.body.value = quill.getLength() > 1 ? quill.getSemanticHTML().replaceAll('&nbsp;', ' ') : '';
-                    this.submitting = true;
+
+                    const action = event.submitter?.value ?? 'publish';
+                    this.$refs.action.value = action;
+
+                    // Preview opens in a new tab and saves nothing, so the editor stays usable.
+                    if (action === 'preview') {
+                        return;
+                    }
+
+                    this.submitting = action;
                 },
 
                 editor() {

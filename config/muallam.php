@@ -14,6 +14,11 @@ return [
 
     'slug_change_cooldown_days' => 30,
 
+    /*
+    | New posts start in this category (it is created by CategorySeeder).
+    */
+    'default_category_slug' => 'general',
+
     'reserved_slugs' => [
         'admin', 'administrator', 'api', 'auth', 'bio', 'blog', 'blogs', 'categories',
         'category', 'contact', 'dashboard', 'edit', 'email', 'help', 'home', 'login',

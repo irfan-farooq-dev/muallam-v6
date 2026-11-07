@@ -42,9 +42,15 @@ class SavePostRequest extends FormRequest
         return $this->user() !== null;
     }
 
+    /**
+     * The editor sends a button ("action": draft or publish) and a visibility (public or private)
+     * instead of a raw status. They are turned into a status here; the status rules below check the result.
+     */
     protected function prepareForValidation(): void
     {
         $this->merge([
+            'status' => $this->statusFromForm(),
+            'publish_option' => $this->boolean('schedule') ? 'schedule' : 'now',
             'title' => Str::squish((string) $this->input('title')),
             'summary' => Str::squish((string) $this->input('summary')) ?: null,
             'category_id' => $this->input('category_id') ?: null,
@@ -52,6 +58,11 @@ class SavePostRequest extends FormRequest
             'allow_comments' => $this->boolean('allow_comments'),
             'remove_featured_image' => $this->boolean('remove_featured_image'),
         ]);
+
+        // A schedule time only matters when publishing publicly with "Schedule for later" on.
+        if (! $this->wantsSchedule()) {
+            $this->merge(['scheduled_at' => null]);
+        }
     }
 
     /**
@@ -62,7 +73,9 @@ class SavePostRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:200'],
             'summary' => ['nullable', 'string', 'max:'.self::SUMMARY_MAX],
-            'category_id' => ['nullable', 'integer', Rule::exists('categories', 'id')->where('is_active', true)],
+            'category_id' => ['required', 'integer', Rule::exists('categories', 'id')->where('is_active', true)],
+            'action' => ['required', 'in:draft,publish'],
+            'visibility' => ['required', Rule::in($this->allowedVisibilities())],
             'body' => ['required', 'string', function (string $attribute, mixed $value, Closure $fail): void {
                 if (! app(PostBodySanitizer::class)->hasContent((string) $value)) {
                     $fail('Write something in the post before saving.');
@@ -89,6 +102,7 @@ class SavePostRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'category_id.required' => 'Choose a category.',
             'category_id.exists' => 'Choose one of the listed categories.',
             'scheduled_at.required' => 'Choose when the post should go live.',
             'scheduled_at.after' => 'The scheduled time must be in the future.',
@@ -97,6 +111,33 @@ class SavePostRequest extends FormRequest
             'featured_image.max' => 'The featured image must be 4 MB or smaller.',
             'featured_image.dimensions' => 'The featured image must be at least 400 by 200 pixels and at most 8000 on each side.',
         ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function allowedVisibilities(): array
+    {
+        return $this->route('post')?->status === PostStatus::Restricted
+            ? ['public', 'private', 'restricted']
+            : ['public', 'private'];
+    }
+
+    private function statusFromForm(): ?string
+    {
+        if ($this->input('action') === 'draft') {
+            return PostStatus::Draft->value;
+        }
+
+        if ($this->input('action') !== 'publish') {
+            return null;
+        }
+
+        return match ($this->input('visibility')) {
+            'private' => PostStatus::Private->value,
+            'restricted' => PostStatus::Restricted->value,
+            default => PostStatus::Published->value,
+        };
     }
 
     public function wantsSchedule(): bool

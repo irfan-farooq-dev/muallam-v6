@@ -34,8 +34,8 @@ class PostEditorTest extends TestCase
             'summary' => 'A short summary.',
             'category_id' => Category::factory()->create()->id,
             'body' => '<p>Hello <strong>world</strong>.</p>',
-            'status' => PostStatus::Draft->value,
-            'publish_option' => 'now',
+            'action' => 'draft',
+            'visibility' => 'public',
             'allow_comments' => '1',
         ], $overrides);
     }
@@ -53,20 +53,25 @@ class PostEditorTest extends TestCase
             ->assertRedirect(route('verification.notice'));
     }
 
-    public function test_editor_offers_active_categories_and_the_editable_statuses(): void
+    public function test_editor_offers_publish_and_draft_buttons_and_active_categories(): void
     {
+        $general = Category::factory()->create(['name' => 'General', 'slug' => 'general']);
         Category::factory()->create(['name' => 'Science']);
         Category::factory()->inactive()->create(['name' => 'Hidden Topic']);
 
         $this->actingAs(User::factory()->create())->get(route('posts.create'))
             ->assertOk()
             ->assertSee('New post')
+            ->assertSee('type="submit" value="publish"', false)
+            ->assertSee('type="submit" value="draft"', false)
+            ->assertSee('Preview')
+            ->assertSee('value="public"', false)
+            ->assertSee('value="private"', false)
+            ->assertDontSee('value="restricted"', false)
+            ->assertSee('<option value="'.$general->id.'" selected>General</option>', false)
             ->assertSee('Science')
             ->assertDontSee('Hidden Topic')
-            ->assertSee('<option value="draft">Draft</option>', false)
-            ->assertSee('<option value="published">Published</option>', false)
-            ->assertSee('<option value="private">Private</option>', false)
-            ->assertDontSee('<option value="restricted">', false);
+            ->assertDontSee('Uncategorised');
     }
 
     public function test_user_can_save_a_draft(): void
@@ -98,7 +103,7 @@ class PostEditorTest extends TestCase
         $this->freezeSecond();
 
         $this->actingAs(User::factory()->create())
-            ->post(route('posts.store'), $this->input(['status' => 'published']))
+            ->post(route('posts.store'), $this->input(['action' => 'publish']))
             ->assertSessionHas('success', 'Post created and published.');
 
         $post = Post::sole();
@@ -112,8 +117,8 @@ class PostEditorTest extends TestCase
 
         $this->actingAs(User::factory()->create())
             ->post(route('posts.store'), $this->input([
-                'status' => 'published',
-                'publish_option' => 'schedule',
+                'action' => 'publish',
+                'schedule' => '1',
                 'scheduled_at' => $goLive->format('Y-m-d\TH:i'),
             ]))
             ->assertSessionHas('success', 'Post created. It will go live on '.$goLive->format('j M Y, g:i a').'.');
@@ -135,10 +140,12 @@ class PostEditorTest extends TestCase
             'summary over 500 characters' => [['summary' => str_repeat('a', 501)], 'summary'],
             'empty editor' => [['body' => '<p><br></p>'], 'body'],
             'only a script' => [['body' => '<script>alert(1)</script>'], 'body'],
+            'missing category' => [['category_id' => ''], 'category_id'],
             'unknown category' => [['category_id' => 999], 'category_id'],
-            'restricted status (not yet available)' => [['status' => 'restricted'], 'status'],
-            'schedule without a time' => [['status' => 'published', 'publish_option' => 'schedule', 'scheduled_at' => ''], 'scheduled_at'],
-            'schedule in the past' => [['status' => 'published', 'publish_option' => 'schedule', 'scheduled_at' => '2020-01-01T10:00'], 'scheduled_at'],
+            'unknown button' => [['action' => 'delete-everything'], 'action'],
+            'restricted visibility (not yet available)' => [['action' => 'publish', 'visibility' => 'restricted'], 'visibility'],
+            'schedule without a time' => [['action' => 'publish', 'schedule' => '1', 'scheduled_at' => ''], 'scheduled_at'],
+            'schedule in the past' => [['action' => 'publish', 'schedule' => '1', 'scheduled_at' => '2020-01-01T10:00'], 'scheduled_at'],
         ];
     }
 
@@ -150,6 +157,24 @@ class PostEditorTest extends TestCase
             ->assertSessionHasErrors($field);
 
         $this->assertDatabaseCount('posts', 0);
+    }
+
+    public function test_editor_sends_the_clicked_button_through_a_hidden_field(): void
+    {
+        $this->actingAs(User::factory()->create())->get(route('posts.create'))
+            ->assertSee('<input type="hidden" name="action"', false)
+            ->assertDontSee('name="action" value="publish" class="btn', false);
+    }
+
+    public function test_errors_without_a_field_of_their_own_are_listed_at_the_top(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->post(route('posts.store'), $this->input(['action' => '']));
+
+        $this->actingAs($user)->get(route('posts.create'))
+            ->assertSee('Please fix the highlighted fields below.')
+            ->assertSee('The action field is required.');
     }
 
     public function test_inactive_category_cannot_be_chosen(): void
@@ -235,17 +260,41 @@ class PostEditorTest extends TestCase
         $post = Post::factory()->for($user)->published()->create(['published_at' => now()->subMonth()->startOfSecond()]);
         $original = $post->published_at;
 
-        $this->actingAs($user)->put(route('posts.update', $post), $this->input(['status' => 'published']));
+        $this->actingAs($user)->put(route('posts.update', $post), $this->input(['action' => 'publish']));
 
         $this->assertTrue($post->fresh()->published_at->equalTo($original));
     }
 
-    public function test_unpublishing_clears_the_publish_date(): void
+    public function test_save_draft_on_a_live_post_unpublishes_it(): void
     {
         $user = User::factory()->create();
         $post = Post::factory()->for($user)->published()->create();
 
-        $this->actingAs($user)->put(route('posts.update', $post), $this->input(['status' => 'private']))
+        $this->actingAs($user)->get(route('posts.edit', $post))->assertSee('Unpublish (back to draft)');
+
+        $this->actingAs($user)->put(route('posts.update', $post), $this->input(['action' => 'draft']))
+            ->assertSessionHas('success', 'Post unpublished. It is a draft again, so only you can see it.');
+
+        $post->refresh();
+        $this->assertSame(PostStatus::Draft, $post->status);
+        $this->assertNull($post->published_at);
+    }
+
+    public function test_hidden_schedule_time_is_ignored_unless_scheduling(): void
+    {
+        $this->actingAs(User::factory()->create())
+            ->post(route('posts.store'), $this->input(['action' => 'publish', 'visibility' => 'private', 'scheduled_at' => '2020-01-01T10:00']))
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(PostStatus::Private, Post::sole()->status);
+    }
+
+    public function test_publishing_privately_clears_the_publish_date(): void
+    {
+        $user = User::factory()->create();
+        $post = Post::factory()->for($user)->published()->create();
+
+        $this->actingAs($user)->put(route('posts.update', $post), $this->input(['action' => 'publish', 'visibility' => 'private']))
             ->assertSessionHas('success', 'Post saved. It is private, so only you can see it.');
 
         $post->refresh();
@@ -275,9 +324,9 @@ class PostEditorTest extends TestCase
         $user = User::factory()->create();
         $post = Post::factory()->for($user)->restricted()->create();
 
-        $this->actingAs($user)->get(route('posts.edit', $post))->assertSee('<option value="restricted">Restricted</option>', false);
+        $this->actingAs($user)->get(route('posts.edit', $post))->assertSee('value="restricted"', false);
 
-        $this->actingAs($user)->put(route('posts.update', $post), $this->input(['status' => 'restricted']))
+        $this->actingAs($user)->put(route('posts.update', $post), $this->input(['action' => 'publish', 'visibility' => 'restricted']))
             ->assertSessionHasNoErrors()
             ->assertSessionHas('success', 'Post saved. It is restricted, so only you can see it for now.');
 

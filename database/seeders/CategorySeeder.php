@@ -33,6 +33,7 @@ class CategorySeeder extends Seeder
         ['name' => 'Health & Wellness', 'description' => null],
         ['name' => 'Science', 'description' => null],
         ['name' => 'Technology', 'description' => null],
+        ['name' => 'General', 'description' => 'Posts that do not fit another category.'],
     ];
 
     public function run(): void

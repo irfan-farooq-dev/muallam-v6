@@ -1,10 +1,14 @@
-{{-- One post in a list. Expects $post with its user loaded. --}}
+{{-- One post in a list. Expects $post with its user loaded. Optional $imageUrl overrides the featured image (used by the preview). --}}
 @php
-    $postUrl = Route::has('posts.show') ? route('posts.show', $post) : null;
+    $postUrl = $post->exists && Route::has('posts.show') ? route('posts.show', $post) : null;
     $author = $post->user;
+    $cardImage = $imageUrl ?? $post->featuredImageUrl();
 @endphp
 
 <article class="post-card card h-100">
+    @if ($cardImage)
+        <img src="{{ $cardImage }}" alt="" class="card-img-top post-card-image" loading="lazy">
+    @endif
     <div class="card-body d-flex flex-column">
         <h3 class="h5 post-card-title mb-2">
             @if ($postUrl)

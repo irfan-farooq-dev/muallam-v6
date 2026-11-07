@@ -1,0 +1,35 @@
+{{-- The full post as readers see it. Expects $post (user and category loaded); optional $imageUrl overrides the featured image. --}}
+@php
+    $articleImage = $imageUrl ?? $post->featuredImageUrl();
+    $author = $post->user;
+@endphp
+
+<article class="post-article">
+    <header class="mb-4">
+        @if ($post->category)
+            <a href="{{ route('categories.show', $post->category) }}" class="post-article-category">{{ $post->category->name }}</a>
+        @endif
+        <h1 class="post-article-title mt-2 mb-3">{{ $post->title }}</h1>
+        @if ($post->summary)
+            <p class="lead text-secondary">{{ $post->summary }}</p>
+        @endif
+        <div class="d-flex align-items-center gap-2 text-secondary small">
+            <x-user-avatar :user="$author" :size="32" />
+            @if ($author->is_bio_public)
+                <a href="{{ route('users.bio', $author->slug) }}" class="text-secondary fw-semibold">{{ $author->name }}</a>
+            @else
+                <span class="fw-semibold">{{ $author->name }}</span>
+            @endif
+            <span>&middot;</span>
+            <time datetime="{{ $post->published_at->toIso8601String() }}">{{ $post->published_at->format('j F Y') }}</time>
+        </div>
+    </header>
+
+    @if ($articleImage)
+        <img src="{{ $articleImage }}" alt="" class="post-article-image mb-4">
+    @endif
+
+    <div class="post-content">
+        {!! $post->body !!}
+    </div>
+</article>

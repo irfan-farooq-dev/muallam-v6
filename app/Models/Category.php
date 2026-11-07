@@ -44,6 +44,14 @@ class Category extends Model
         );
     }
 
+    /**
+     * The category new posts start in ("General"), if it exists and is active.
+     */
+    public static function default(): ?Category
+    {
+        return static::query()->active()->where('slug', config('muallam.default_category_slug'))->first();
+    }
+
     public function getRouteKeyName(): string
     {
         return 'slug';
