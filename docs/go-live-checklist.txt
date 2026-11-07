@@ -92,12 +92,14 @@ a post, older than 24 hours).
 
 5. FIRST ADMIN ACCOUNT
 ----------------------
-No admin sign-up screen yet (the admin panel is a later feature). Register
-normally on the live site, verify the email, then promote yourself:
+There is no admin sign-up screen (on purpose). Register normally on the live
+site, verify the email, then promote yourself once:
 
     php artisan tinker --execute 'App\Models\User::where("email", "you@example.com")->update(["role" => "admin"]);'
 
 [ ] Admin account created and promoted.
+[ ] Open https://muallam.com/admin and check the dashboard loads. Further
+    admins can then be made from Admin > Users (no tinker needed).
 
 
 6. EMAIL DELIVERY
@@ -174,11 +176,6 @@ The site sends: email verification, password reset, restricted-post invites.
 11. FEATURES AND IMPROVEMENTS FOR LATER
 ---------------------------------------
 Planned next:
-[ ] Admin panel (Sneat): dashboard, users, categories, posts, comments.
-    - When deleting a user, RECOUNT likes and comments on the posts they
-      liked or commented on.
-    - When deactivating a user, SIGN THEM OUT IMMEDIATELY (today they stay
-      signed in until they log out).
 [ ] Mobile app API (Sanctum tokens, users.fcm_token for push notifications).
 
 Deferred (agreed earlier):

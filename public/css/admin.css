@@ -85,3 +85,12 @@ h1, h2, h3, h4, h5, h6,
     border-left: 0;
     border-right: 0;
 }
+
+[x-cloak] {
+    display: none !important;
+}
+
+.admin-comment-body {
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}

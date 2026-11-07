@@ -68,7 +68,7 @@
                             <td class="text-end text-nowrap small">
                                 <span title="Views"><i class="bx bx-show"></i> {{ number_format($post->views_count) }}</span>
                                 <span class="ms-2" title="Likes"><i class="bx bx-like"></i> {{ number_format($post->likes_count) }}</span>
-                                <span class="ms-2" title="Comments"><i class="bx bx-comment"></i> {{ number_format($post->comments_count) }}</span>
+                                <a href="{{ route('admin.comments.index', ['post' => $post->id]) }}" class="ms-2 text-body" title="Manage comments on this post"><i class="bx bx-comment"></i> {{ number_format($post->comments_count) }}</a>
                             </td>
                             <td class="text-nowrap small"><span title="{{ $post->updated_at->format('j M Y, g:i a') }}">{{ $post->updated_at->diffForHumans() }}</span></td>
                             <td class="text-end text-nowrap">

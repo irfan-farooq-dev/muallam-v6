@@ -116,7 +116,12 @@
 
         <div class="col-lg-4">
             <div class="card h-100">
-                <div class="card-header"><h5 class="card-title mb-0">Latest comments</h5></div>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Latest comments</h5>
+                    @if (Route::has('admin.comments.index'))
+                        <a href="{{ route('admin.comments.index') }}" class="small">Manage</a>
+                    @endif
+                </div>
                 <ul class="list-group list-group-flush admin-list">
                     @forelse ($recentComments as $comment)
                         <li class="list-group-item">

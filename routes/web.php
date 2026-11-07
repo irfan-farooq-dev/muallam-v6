@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
+use App\Http\Controllers\Admin\CommentController as AdminCommentController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\PostController as AdminPostController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
@@ -135,6 +136,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'admin']
     Route::get('posts', [AdminPostController::class, 'index'])->name('posts.index');
     Route::post('posts/{post}/unpublish', [AdminPostController::class, 'unpublish'])->name('posts.unpublish');
     Route::delete('posts/{post}', [AdminPostController::class, 'destroy'])->name('posts.destroy');
+    Route::get('comments', [AdminCommentController::class, 'index'])->name('comments.index');
+    Route::post('comments/bulk', [AdminCommentController::class, 'bulk'])->name('comments.bulk');
+    Route::patch('comments/{comment}/visibility', [AdminCommentController::class, 'visibility'])->name('comments.visibility');
+    Route::delete('comments/{comment}', [AdminCommentController::class, 'destroy'])->name('comments.destroy');
 });
 
 // Invited readers of restricted posts: invite link, then the post password.

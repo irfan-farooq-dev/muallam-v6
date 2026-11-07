@@ -119,10 +119,11 @@ php artisan optimize                  # caches config, routes, views, events</pr
     </ul>
 
     <h2 id="admin">5. First admin account</h2>
-    <p>There is no admin sign-up screen yet (the admin panel is a later feature). Register normally on the live site, verify the email, then promote yourself:</p>
+    <p>There is no admin sign-up screen (on purpose). Register normally on the live site, verify the email, then promote yourself once:</p>
 <pre>php artisan tinker --execute 'App\Models\User::where("email", "you@example.com")->update(["role" => "admin"]);'</pre>
     <ul class="check">
         <li><input type="checkbox" id="a1"><label for="a1">Admin account created and promoted.</label></li>
+        <li><input type="checkbox" id="a2"><label for="a2">Open <code>https://muallam.com/admin</code> and check the dashboard loads. Further admins can then be made from Admin &rsaquo; Users (no tinker needed).</label></li>
     </ul>
 
     <h2 id="email">6. Email delivery</h2>
@@ -176,7 +177,6 @@ php artisan optimize                  # caches config, routes, views, events</pr
     <h2 id="later">11. Features and improvements for later</h2>
     <h3>Planned next</h3>
     <ul class="check">
-        <li><input type="checkbox" id="l1"><label for="l1"><strong>Admin panel</strong> (Sneat): dashboard, users, categories, posts and comments. When deleting a user, <strong>recount</strong> likes and comments on the posts they liked or commented on; when deactivating a user, <strong>sign them out immediately</strong> (today they stay signed in until they log out).</label></li>
         <li><input type="checkbox" id="l2"><label for="l2">Mobile app API (Sanctum tokens, <code>users.fcm_token</code> for push notifications).</label></li>
     </ul>
     <h3>Deferred (agreed earlier)</h3>
