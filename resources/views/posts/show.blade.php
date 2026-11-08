@@ -90,6 +90,11 @@
                         <a href="#comments" class="text-secondary" title="Comments"><i class="bi bi-chat me-1"></i>{{ number_format($post->comments_count) }}</a>
                     </div>
 
+                    {{-- Only live public posts: private, restricted, draft and scheduled ones must not be spread around. --}}
+                    @if ($isPublic)
+                        <x-share-buttons class="mt-3" :url="route('posts.show', $post)" :title="$post->title" />
+                    @endif
+
                     <div class="author-box d-flex gap-3 align-items-start mt-4 p-4">
                         <x-user-avatar :user="$post->user" :size="56" />
                         <div>

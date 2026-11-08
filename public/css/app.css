@@ -770,6 +770,70 @@ a.post-card-author:focus-visible .post-card-author-name {
     }
 }
 
+/* Share buttons (post page): round brand-coloured icons */
+.share-label {
+    font-family: var(--nav-font);
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--heading-color);
+}
+
+.share-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border: 0;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 1.05rem;
+    text-decoration: none;
+    transition: transform 0.15s, filter 0.15s;
+}
+
+.share-button:hover,
+.share-button:focus-visible {
+    color: #fff;
+    filter: brightness(0.9);
+    transform: translateY(-2px);
+}
+
+.share-facebook { background: #1877f2; }
+.share-whatsapp { background: #25d366; }
+.share-linkedin { background: #0a66c2; }
+.share-x { background: #000; }
+.share-telegram { background: #229ed9; }
+.share-email { background: #6c757d; }
+.share-copy,
+.share-native { background: #e9ecef; color: #252525; }
+
+.share-copy:hover,
+.share-copy:focus-visible,
+.share-native:hover,
+.share-native:focus-visible {
+    color: #252525;
+}
+
+.share-copy.is-copied {
+    background: #198754;
+    color: #fff;
+}
+
+.share-copied {
+    color: #198754;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .share-button {
+        transition: none;
+    }
+
+    .share-button:hover {
+        transform: none;
+    }
+}
+
 /* Right-hand sidebar (home and post pages): categories now, space for ads later */
 .site-sidebar {
     position: sticky;
