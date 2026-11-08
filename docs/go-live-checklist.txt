@@ -242,7 +242,8 @@ Deferred (agreed earlier):
     permission check instead of public addresses).
 [ ] Image captions in the editor; replace the browser's plain "describe this
     image" pop-up with a styled dialog.
-[ ] Notifications: someone liked your post, commented, or replied to you.
+[ ] Email copies of notifications (in-site bell notifications are done),
+    with a profile setting to turn them off.
 [ ] Per-view log (post_views, like the old project's blog_views); today only
     views_count is kept, once per visitor session.
 [ ] Editing comments (for example within 15 minutes of posting).

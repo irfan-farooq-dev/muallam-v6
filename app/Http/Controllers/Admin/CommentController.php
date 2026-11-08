@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Comment;
 use App\Models\Post;
+use App\Services\Notifier;
 use App\Services\PostComments;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -28,7 +29,10 @@ class CommentController extends Controller
         'deleted' => 'Deleted',
     ];
 
-    public function __construct(private PostComments $comments) {}
+    public function __construct(
+        private PostComments $comments,
+        private Notifier $notifier,
+    ) {}
 
     public function index(Request $request): View
     {
@@ -63,13 +67,14 @@ class CommentController extends Controller
     public function visibility(Request $request, Comment $comment): RedirectResponse
     {
         $visible = $request->boolean('visible');
-        $this->comments->setVisible($comment, $visible);
+        $this->changeVisibility($comment, $visible, $request);
 
         return back()->with('success', $visible ? 'Comment is visible again.' : 'Comment hidden from readers.');
     }
 
-    public function destroy(Comment $comment): RedirectResponse
+    public function destroy(Request $request, Comment $comment): RedirectResponse
     {
+        $this->notifier->commentDeletedByAdmin($comment, $request->user());
         $this->comments->remove($comment);
 
         return back()->with('success', 'Comment deleted.');
@@ -88,18 +93,32 @@ class CommentController extends Controller
             'comments.required' => 'Tick at least one comment first.',
         ]);
 
-        $selected = Comment::query()->with('post:id,user_id')->whereKey($validated['comments'])->get();
+        $selected = Comment::query()->with(['post:id,user_id,title,slug', 'user'])->whereKey($validated['comments'])->get();
 
         foreach ($selected as $comment) {
-            match ($validated['action']) {
-                'hide' => $this->comments->setVisible($comment, false),
-                'show' => $this->comments->setVisible($comment, true),
-                'delete' => $this->comments->remove($comment),
-            };
+            if ($validated['action'] === 'delete') {
+                $this->notifier->commentDeletedByAdmin($comment, $request->user());
+                $this->comments->remove($comment);
+            } else {
+                $this->changeVisibility($comment, $validated['action'] === 'show', $request);
+            }
         }
 
         $done = ['hide' => 'hidden', 'show' => 'made visible', 'delete' => 'deleted'][$validated['action']];
 
         return back()->with('success', trans_choice("{1} 1 comment {$done}.|[2,*] :count comments {$done}.", $selected->count()));
+    }
+
+    /**
+     * Hides or shows a comment; its writer is told when it gets hidden.
+     */
+    private function changeVisibility(Comment $comment, bool $visible, Request $request): void
+    {
+        $wasVisible = $comment->is_approved;
+        $this->comments->setVisible($comment, $visible);
+
+        if ($wasVisible && ! $visible) {
+            $this->notifier->commentHiddenByAdmin($comment, $request->user());
+        }
     }
 }

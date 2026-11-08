@@ -41,6 +41,8 @@ class UserDeletion
         $files = $this->filesOf($user);
 
         DB::transaction(function () use ($user, $affectedPostIds): void {
+            // The notifications table has no foreign key (it is shared by any notifiable model), so clear them here.
+            $user->notifications()->delete();
             $user->delete();
             $this->recount($affectedPostIds->all());
         });

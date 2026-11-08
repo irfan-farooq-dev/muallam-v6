@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Post;
 use App\Services\FeaturedImageProcessor;
+use App\Services\Notifier;
 use App\Services\PostImageStore;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -63,15 +64,22 @@ class PostController extends Controller
     /**
      * Takes a post off the site by making it a draft again (the author can publish it later).
      */
-    public function unpublish(Post $post): RedirectResponse
+    public function unpublish(Request $request, Post $post, Notifier $notifier): RedirectResponse
     {
+        $wasDraft = $post->status === PostStatus::Draft;
         $post->forceFill(['status' => PostStatus::Draft, 'published_at' => null])->save();
+
+        if (! $wasDraft) {
+            $notifier->postUnpublishedByAdmin($post, $request->user());
+        }
 
         return back()->with('success', "\"{$post->title}\" is now a draft and no longer public.");
     }
 
-    public function destroy(Post $post, FeaturedImageProcessor $featuredImages, PostImageStore $bodyImages): RedirectResponse
+    public function destroy(Request $request, Post $post, FeaturedImageProcessor $featuredImages, PostImageStore $bodyImages, Notifier $notifier): RedirectResponse
     {
+        $notifier->postDeletedByAdmin($post, $request->user());
+
         $featuredImages->delete($post->featured_image);
         $bodyImages->deleteAllFor($post);
         $post->delete();

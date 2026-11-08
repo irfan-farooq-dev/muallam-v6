@@ -164,6 +164,21 @@ Indexes: `(post_id, resolved_at)`.
 
 Rules: at most one open row per post. Further admin edits keep the first row (so the comparison stays against the author's own version). Only title, summary and body changes open a row.
 
+## notifications
+
+Laravel's standard database notifications table (`php artisan make:notifications-table`), shown by the bell in the site header and the admin navbar. In-site only, no emails.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid PK | |
+| type | varchar | always `App\Notifications\SiteNotification` |
+| notifiable_type, notifiable_id | morph | the user it is for |
+| data | text (JSON) | `kind` (`NotificationKind`), `message`, `excerpt`, `url` (site-relative), plus `post_id` / `comment_id` / `actor_ids` |
+| read_at | timestamp, null | |
+| created_at, updated_at | timestamps | |
+
+Rules: nobody is notified of their own actions. Likes and admin edits on the same post update the existing unread notification ("Ali and 2 others liked…"). Deleting a user deletes their notifications; `notifications:prune` (daily) deletes ones read more than 90 days ago.
+
 ## Laravel default tables
 
 `password_reset_tokens`, `sessions`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`.

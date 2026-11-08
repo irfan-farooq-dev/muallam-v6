@@ -7,8 +7,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Posts\SavePostRequest;
 use App\Models\Category;
 use App\Models\Post;
+use App\Models\User;
 use App\Services\AdminEditTracker;
 use App\Services\FeaturedImageProcessor;
+use App\Services\Notifier;
 use App\Services\PostImageStore;
 use App\Services\PostSlugGenerator;
 use Carbon\CarbonInterface;
@@ -23,6 +25,7 @@ class PostEditorController extends Controller
         private FeaturedImageProcessor $featuredImages,
         private PostImageStore $bodyImages,
         private AdminEditTracker $adminEdits,
+        private Notifier $notifier,
     ) {}
 
     public function create(): View
@@ -43,6 +46,10 @@ class PostEditorController extends Controller
         $post->save();
         $this->bodyImages->syncWithBody($post, $request->user());
 
+        if ($post->status === PostStatus::Published) {
+            $this->notifier->postPublished($post, $request->user());
+        }
+
         return redirect()->route('posts.edit', $post)->with('success', $this->savedMessage($post, 'created'));
     }
 
@@ -53,7 +60,8 @@ class PostEditorController extends Controller
 
     public function update(SavePostRequest $request, Post $post): RedirectResponse
     {
-        $wasLive = $post->status === PostStatus::Published && ! $post->isScheduled();
+        $wasPublished = $post->status === PostStatus::Published;
+        $wasLive = $wasPublished && ! $post->isScheduled();
         $before = $this->adminEdits->snapshot($post);
         $post->fill($this->postAttributes($request, $post));
 
@@ -69,6 +77,7 @@ class PostEditorController extends Controller
         $post->save();
         $this->bodyImages->syncWithBody($post, $request->user());
         $this->adminEdits->recordSave($post, $request->user(), $before);
+        $this->notifyAboutStatusChange($post, $request->user(), $wasPublished, $wasLive);
 
         $message = $wasLive && $post->status === PostStatus::Draft
             ? 'Post unpublished. It is a draft again, so only you can see it.'
@@ -79,6 +88,10 @@ class PostEditorController extends Controller
 
     public function destroy(Request $request, Post $post): RedirectResponse
     {
+        if ($request->user()->isAdmin()) {
+            $this->notifier->postDeletedByAdmin($post, $request->user());
+        }
+
         $this->featuredImages->delete($post->featured_image);
         $this->bodyImages->deleteAllFor($post);
         $post->delete();
@@ -86,6 +99,20 @@ class PostEditorController extends Controller
         $backTo = $request->user()->is($post->user) ? 'posts.mine' : 'admin.posts.index';
 
         return redirect()->route($backTo)->with('success', "\"{$post->title}\" was deleted.");
+    }
+
+    /**
+     * Admins hear about newly published posts; an author hears when an admin takes their live post down.
+     */
+    private function notifyAboutStatusChange(Post $post, User $editor, bool $wasPublished, bool $wasLive): void
+    {
+        if (! $wasPublished && $post->status === PostStatus::Published) {
+            $this->notifier->postPublished($post, $editor);
+        }
+
+        if ($wasLive && $post->status === PostStatus::Draft && $editor->isAdmin()) {
+            $this->notifier->postUnpublishedByAdmin($post, $editor);
+        }
     }
 
     private function form(Post $post): View

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\User;
+use App\Services\Notifier;
 use App\Services\UserSlugGenerator;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -24,11 +25,12 @@ class RegisterController extends Controller
         return view('auth.register');
     }
 
-    public function store(RegisterRequest $request, UserSlugGenerator $slugs): RedirectResponse
+    public function store(RegisterRequest $request, UserSlugGenerator $slugs, Notifier $notifier): RedirectResponse
     {
         $user = $this->createUser($request->validated(), $slugs);
 
         event(new Registered($user));
+        $notifier->memberRegistered($user);
 
         Auth::login($user);
         $request->session()->regenerate();

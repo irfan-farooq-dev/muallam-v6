@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Posts\StoreCommentRequest;
 use App\Models\Comment;
 use App\Models\Post;
+use App\Services\Notifier;
 use App\Services\PostComments;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,7 +14,10 @@ use Illuminate\Support\Facades\Gate;
 
 class CommentController extends Controller
 {
-    public function __construct(private PostComments $comments) {}
+    public function __construct(
+        private PostComments $comments,
+        private Notifier $notifier,
+    ) {}
 
     public function store(StoreCommentRequest $request, Post $post): RedirectResponse
     {
@@ -27,14 +31,16 @@ class CommentController extends Controller
         }
 
         $comment = $this->comments->add($request->user(), $post, $request->validated('body'), $parent);
+        $this->notifier->commentPosted($comment);
 
         return redirect()->to(route('posts.show', $post).'#comment-'.$comment->getKey())
             ->with('success', $parent ? 'Reply posted.' : 'Comment posted.');
     }
 
-    public function destroy(Comment $comment): RedirectResponse
+    public function destroy(Request $request, Comment $comment): RedirectResponse
     {
         Gate::authorize('delete', $comment);
+        $this->notifier->commentDeletedByAdmin($comment, $request->user());
         $this->comments->remove($comment);
 
         return redirect()->to(route('posts.show', $comment->post).'#comments')->with('success', 'Comment deleted.');
@@ -44,7 +50,12 @@ class CommentController extends Controller
     {
         Gate::authorize('moderate', $comment);
         $visible = $request->boolean('visible');
+        $wasVisible = $comment->is_approved;
         $this->comments->setVisible($comment, $visible);
+
+        if ($wasVisible && ! $visible) {
+            $this->notifier->commentHiddenByAdmin($comment, $request->user());
+        }
 
         return redirect()->to(route('posts.show', $comment->post).'#comment-'.$comment->getKey())
             ->with('success', $visible ? 'Comment is visible again.' : 'Comment hidden. Only you and admins can see it now.');

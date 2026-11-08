@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Posts;
 
 use App\Http\Controllers\Controller;
 use App\Models\Post;
+use App\Services\Notifier;
 use App\Services\PostLikes;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -14,9 +15,13 @@ class PostLikeController extends Controller
     /**
      * Like or unlike. Answers JSON for the button; a plain form post (no JavaScript) is sent back to the post.
      */
-    public function toggle(Request $request, Post $post, PostLikes $likes): JsonResponse|RedirectResponse
+    public function toggle(Request $request, Post $post, PostLikes $likes, Notifier $notifier): JsonResponse|RedirectResponse
     {
         $result = $likes->toggle($request->user(), $post);
+
+        if ($result['liked']) {
+            $notifier->postLiked($request->user(), $post);
+        }
 
         if ($request->expectsJson()) {
             return response()->json($result);

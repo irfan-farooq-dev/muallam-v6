@@ -19,6 +19,9 @@
     <link rel="stylesheet" href="{{ asset('frontend/vendor/aos/aos.css') }}">
     <link rel="stylesheet" href="{{ asset('frontend/css/main.css') }}">
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    @auth
+        <link rel="stylesheet" href="{{ asset('css/notifications.css') }}">
+    @endauth
     @stack('styles')
 
     <script defer src="{{ asset('vendor/alpinejs/alpine.min.js') }}"></script>

@@ -14,6 +14,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Posts\CommentController;
 use App\Http\Controllers\Posts\LikedPostsController;
 use App\Http\Controllers\Posts\MyPostsController;
@@ -70,6 +71,11 @@ Route::middleware('auth')->group(function () {
     Route::post('logout', LogoutController::class)->name('logout');
 
     Route::get('dashboard', DashboardController::class)->name('dashboard');
+
+    Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('notifications/feed', [NotificationController::class, 'feed'])->middleware('throttle:30,1')->name('notifications.feed');
+    Route::get('notifications/{notification}/open', [NotificationController::class, 'open'])->whereUuid('notification')->name('notifications.open');
+    Route::post('notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
 
     Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -136,6 +142,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'admin']
     Route::get('posts', [AdminPostController::class, 'index'])->name('posts.index');
     Route::post('posts/{post}/unpublish', [AdminPostController::class, 'unpublish'])->name('posts.unpublish');
     Route::delete('posts/{post}', [AdminPostController::class, 'destroy'])->name('posts.destroy');
+    Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::get('comments', [AdminCommentController::class, 'index'])->name('comments.index');
     Route::post('comments/bulk', [AdminCommentController::class, 'bulk'])->name('comments.bulk');
     Route::patch('comments/{comment}/visibility', [AdminCommentController::class, 'visibility'])->name('comments.visibility');

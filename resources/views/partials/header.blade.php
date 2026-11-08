@@ -47,6 +47,8 @@
             @endguest
 
             @auth
+                <x-notification-bell />
+
                 <div class="dropdown">
                     <button class="btn btn-link header-account-toggle d-flex align-items-center gap-2 p-0" type="button"
                             data-bs-toggle="dropdown" aria-expanded="false">

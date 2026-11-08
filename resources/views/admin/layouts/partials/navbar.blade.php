@@ -11,6 +11,9 @@
         </div>
 
         <ul class="navbar-nav flex-row align-items-center ms-auto">
+            <li class="nav-item me-2 me-xl-3">
+                <x-notification-bell variant="admin" />
+            </li>
             <li class="nav-item navbar-dropdown dropdown-user dropdown">
                 <a class="nav-link dropdown-toggle hide-arrow d-flex align-items-center gap-2" href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
                     <x-user-avatar :user="auth()->user()" :size="36" />

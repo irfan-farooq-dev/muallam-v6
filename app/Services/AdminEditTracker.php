@@ -11,6 +11,8 @@ use App\Models\User;
  */
 class AdminEditTracker
 {
+    public function __construct(private Notifier $notifier) {}
+
     /**
      * Fields whose changes are shown to the author.
      */
@@ -53,6 +55,7 @@ class AdminEditTracker
             return;
         }
 
+        $this->notifier->postEditedByAdmin($post, $editor);
         $open = $post->pendingAdminEdit()->first();
 
         if ($open) {
