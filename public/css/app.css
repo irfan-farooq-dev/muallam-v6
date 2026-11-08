@@ -192,6 +192,85 @@ a:hover {
     background-position: right 2.75rem center;
 }
 
+/*
+ * Floating labels in the old site's style: the label starts inside the box and, once the field is focused
+ * or filled, moves up onto the top border (smaller, blue while typing). Restyles Bootstrap's .form-floating,
+ * so the markup stays standard.
+ */
+.form-floating > .form-control,
+.form-floating > .form-select {
+    height: 3.25rem;
+    min-height: 3.25rem;
+    padding: 0.75rem 1rem;
+    line-height: 1.5;
+}
+
+.form-floating > textarea.form-control {
+    height: auto;
+    padding-top: 0.9rem;
+}
+
+/* Bootstrap pushes the text down to make room for a label inside the box; ours sits on the border instead. */
+.form-floating > .form-control:focus,
+.form-floating > .form-control:not(:placeholder-shown),
+.form-floating > .form-control:-webkit-autofill {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+}
+
+.form-floating > textarea.form-control:focus,
+.form-floating > textarea.form-control:not(:placeholder-shown) {
+    padding-top: 0.9rem;
+}
+
+.form-floating > label {
+    top: 50%;
+    left: 0.7rem;
+    height: auto;
+    max-width: calc(100% - 1.4rem);
+    padding: 0 0.35rem;
+    border: 0;
+    line-height: 1.2;
+    color: #777;
+    /* Same colour as the card behind it, so the label hides the border line it sits on. */
+    background-color: var(--bs-card-bg, var(--bs-body-bg));
+    transform: translateY(-50%);
+    transform-origin: left center;
+    transition: top 0.2s ease, transform 0.2s ease, color 0.2s ease;
+}
+
+.form-floating > textarea ~ label {
+    top: 1.5rem;
+}
+
+.form-floating > label::after {
+    display: none;
+}
+
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-control:not(:placeholder-shown) ~ label,
+.form-floating > .form-control:-webkit-autofill ~ label,
+.form-floating > .form-select ~ label {
+    top: 0;
+    color: #252525;
+    transform: translateY(-50%) scale(0.85);
+}
+
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-select:focus ~ label {
+    color: var(--accent-color);
+}
+
+.form-floating > .form-control.is-invalid ~ label,
+.form-floating > .form-select.is-invalid ~ label {
+    color: var(--bs-form-invalid-color);
+}
+
+.form-floating > .form-control:disabled ~ label,
+.form-floating > .form-select:disabled ~ label {
+    color: var(--bs-secondary-color);
+}
+
 /* Unverified email reminder under the header */
 .verify-email-banner {
     background: #fff8e1;
