@@ -18,6 +18,12 @@ class CommentsTest extends TestCase
         return Post::factory()->published()->create($attributes);
     }
 
+    public function test_post_comment_button_uses_the_outline_style(): void
+    {
+        $this->actingAs(User::factory()->create())->get(route('posts.show', $this->livePost()))
+            ->assertSee('<button type="submit" class="btn btn-outline-accent btn-sm">Post comment</button>', false);
+    }
+
     public function test_reader_can_comment_and_the_count_goes_up(): void
     {
         $reader = User::factory()->create();

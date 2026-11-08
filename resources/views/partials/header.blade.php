@@ -23,6 +23,10 @@
                     </li>
                 @endif
 
+                @auth
+                    <li><a href="{{ route('dashboard') }}" @class(['active' => request()->routeIs('dashboard')])>Dashboard</a></li>
+                @endauth
+
                 @guest
                     {{-- On small screens the account links live inside the menu. --}}
                     <li class="d-sm-none"><a href="{{ Route::has('login') ? route('login') : '#' }}">Sign in</a></li>

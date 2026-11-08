@@ -68,12 +68,12 @@
 
     <section class="section">
         <div class="container">
-            <div class="row justify-content-center">
+            <div class="row g-4">
                 <div class="col-lg-8">
                     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-                        <x-breadcrumbs :items="$post->category
-                            ? [[$post->category->name, route('categories.show', $post->category)], [$post->title]]
-                            : [[$post->title]]" />
+                        {{-- The title is right below, so the trail stops at the category. --}}
+                        <x-breadcrumbs :ends-with-current-page="false"
+                            :items="$post->category ? [[$post->category->name, route('categories.show', $post->category)]] : []" />
                         @if ($isPublic)
                             @can('update', $post)
                                 <a href="{{ route('posts.edit', $post) }}" class="btn btn-sm btn-outline-accent"><i class="bi bi-pencil me-1"></i>Edit post</a>
@@ -120,6 +120,10 @@
                             </ul>
                         </div>
                     @endif
+                </div>
+
+                <div class="col-lg-3 offset-lg-1">
+                    @include('partials.category-sidebar', ['activeCategory' => $post->category?->slug])
                 </div>
             </div>
 

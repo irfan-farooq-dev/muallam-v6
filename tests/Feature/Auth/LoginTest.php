@@ -53,7 +53,7 @@ class LoginTest extends TestCase
 
         $this->post(route('login.store'), ['email' => 'irfan@example.com', 'password' => 'secret-pass-1'])
             ->assertRedirect(route('dashboard'))
-            ->assertSessionHas('success', 'Welcome back, Irfan Farooq!');
+            ->assertSessionMissing('success');
 
         $this->assertAuthenticatedAs($user);
     }

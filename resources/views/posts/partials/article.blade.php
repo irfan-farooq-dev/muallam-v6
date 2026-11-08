@@ -6,10 +6,7 @@
 
 <article class="post-article">
     <header class="mb-4">
-        @if ($post->category)
-            <a href="{{ route('categories.show', $post->category) }}" class="post-article-category">{{ $post->category->name }}</a>
-        @endif
-        <h1 class="post-article-title mt-2 mb-3">{{ $post->title }}</h1>
+        <h1 class="post-article-title mb-3">{{ $post->title }}</h1>
         @if ($post->summary)
             <p class="lead text-secondary">{{ $post->summary }}</p>
         @endif

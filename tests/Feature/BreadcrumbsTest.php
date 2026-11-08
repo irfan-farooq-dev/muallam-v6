@@ -17,7 +17,7 @@ class BreadcrumbsTest extends TestCase
         return '<a href="'.$url.'" itemprop="item"><span itemprop="name">'.$label.'</span></a>';
     }
 
-    public function test_post_page_trail_is_home_then_category_then_post(): void
+    public function test_post_page_trail_is_home_then_category_without_repeating_the_title(): void
     {
         $category = Category::factory()->create(['name' => 'Science', 'slug' => 'science']);
         $post = Post::factory()->for($category)->published()->create(['title' => 'How stars form']);
@@ -26,16 +26,18 @@ class BreadcrumbsTest extends TestCase
             ->assertSee('aria-label="breadcrumb"', false)
             ->assertSee($this->crumbLink(route('home'), 'Home'), false)
             ->assertSee($this->crumbLink(route('categories.show', 'science'), 'Science'), false)
-            ->assertSee('<span itemprop="name">How stars form</span>', false);
+            ->assertDontSee('<span itemprop="name">How stars form</span>', false)
+            ->assertDontSee('aria-current="page"', false)
+            ->assertSee('<h1 class="post-article-title mb-3">How stars form</h1>', false);
     }
 
-    public function test_post_without_category_skips_the_category_crumb(): void
+    public function test_post_without_category_has_just_home_in_its_trail(): void
     {
         $post = Post::factory()->withoutCategory()->published()->create(['title' => 'Loose post']);
 
         $this->get(route('posts.show', $post))
             ->assertSee($this->crumbLink(route('home'), 'Home'), false)
-            ->assertSee('<span itemprop="name">Loose post</span>', false);
+            ->assertDontSee('<span itemprop="name">Loose post</span>', false);
     }
 
     public function test_listing_pages_have_trails_back_home(): void

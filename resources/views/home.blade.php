@@ -2,6 +2,36 @@
 
 @section('title', 'Home')
 
+@if ($featured->isNotEmpty())
+    @push('styles')
+        <link rel="stylesheet" href="{{ asset('frontend/vendor/swiper/swiper-bundle.min.css') }}">
+    @endpush
+    @push('scripts')
+        <script src="{{ asset('frontend/vendor/swiper/swiper-bundle.min.js') }}"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const slider = document.querySelector('.featured-slider');
+                if (!slider || typeof Swiper === 'undefined') {
+                    return;
+                }
+
+                // No automatic sliding for visitors who asked their system for less motion.
+                const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+                new Swiper(slider, {
+                    loop: slider.dataset.loop === '1',
+                    speed: 600,
+                    autoplay: reduceMotion ? false : { delay: 5000, pauseOnMouseEnter: true, disableOnInteraction: false },
+                    pagination: { el: slider.querySelector('.swiper-pagination'), clickable: true },
+                    navigation: { nextEl: slider.querySelector('.swiper-button-next'), prevEl: slider.querySelector('.swiper-button-prev') },
+                    keyboard: { enabled: true, onlyInViewport: true },
+                    a11y: { enabled: true },
+                });
+            });
+        </script>
+    @endpush
+@endif
+
 @section('content')
     @if ($posts->onFirstPage())
         <section class="section home-hero light-background">
@@ -17,7 +47,7 @@
                     </div>
                 </form>
                 @guest
-                    <a href="{{ route('register') }}" class="btn btn-outline-accent">Start writing</a>
+                    <a href="{{ route('login') }}" class="btn btn-outline-accent">Start writing</a>
                 @endguest
             </div>
         </section>
@@ -25,34 +55,42 @@
 
     <section class="section">
         <div class="container">
-            @if ($categories !== [])
-                <div class="category-chips d-flex flex-wrap gap-2 mb-4">
-                    @foreach ($categories as $chip)
-                        <a href="{{ route('categories.show', $chip['slug']) }}" class="badge rounded-pill category-chip">{{ $chip['name'] }}</a>
-                    @endforeach
-                </div>
-            @endif
+            <div class="row g-4">
+                <div class="col-lg-9">
+                    @if ($featured->isNotEmpty())
+                        @include('partials.featured-slider', ['featured' => $featured])
+                    @endif
 
-            <div class="d-flex align-items-baseline justify-content-between mb-4">
-                <h3 class="mb-0">Latest posts</h3>
-            </div>
+                    <div class="home-section-heading d-flex align-items-baseline justify-content-between mb-4">
+                        <h3 class="mb-0">Latest posts</h3>
+                    </div>
 
-            @if ($posts->isEmpty())
-                <div class="empty-state text-center text-secondary py-5">
-                    <i class="bi bi-journal-text display-6 d-block mb-3"></i>
-                    No posts yet. Published posts will appear here.
-                </div>
-            @else
-                <div class="row g-3">
-                    @foreach ($posts as $post)
-                        <div class="col-md-6 col-lg-4">
-                            @include('partials.post-card', ['post' => $post])
+                    @if ($posts->isEmpty())
+                        <div class="empty-state text-center text-secondary py-5">
+                            <i class="bi bi-journal-text display-6 d-block mb-3"></i>
+                            No posts yet. Published posts will appear here.
                         </div>
+                    @else
+                        <div class="row g-3">
+                            @foreach ($posts as $post)
+                                <div class="col-md-6 col-xl-4" data-aos="fade-up" data-aos-delay="{{ ($loop->index % 3) * 100 }}">
+                                    @include('partials.post-card', ['post' => $post])
+                                </div>
+                            @endforeach
+                        </div>
+
+                        <div class="mt-4">{{ $posts->links() }}</div>
+                    @endif
+
+                    @foreach ($categorySections as $section)
+                        @include('partials.category-section', $section)
                     @endforeach
                 </div>
 
-                <div class="mt-4">{{ $posts->links() }}</div>
-            @endif
+                <div class="col-lg-3">
+                    @include('partials.category-sidebar')
+                </div>
+            </div>
         </div>
     </section>
 @endsection

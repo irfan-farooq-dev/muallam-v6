@@ -33,6 +33,7 @@ class AppServiceProvider extends ServiceProvider
         Paginator::useBootstrapFive();
 
         View::composer('partials.header', fn ($view) => $view->with('navCategories', Category::forNavigation()));
+        View::composer('partials.category-sidebar', fn ($view) => $view->with('sidebarCategories', Category::forNavigation()));
 
         VerifyEmail::toMailUsing(fn (object $notifiable, string $url): MailMessage => (new MailMessage)
             ->subject('Verify your Muallam email address')

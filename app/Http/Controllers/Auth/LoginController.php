@@ -16,11 +16,10 @@ class LoginController extends Controller
 
     public function store(LoginRequest $request): RedirectResponse
     {
-        $user = $request->authenticate();
+        $request->authenticate();
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard'))
-            ->with('success', "Welcome back, {$user->name}!");
+        return redirect()->intended(route('dashboard'));
     }
 }

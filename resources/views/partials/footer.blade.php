@@ -13,9 +13,7 @@
                 <ul>
                     <li><a href="{{ route('home') }}">Home</a></li>
                     @guest
-                        @if (Route::has('register'))
-                            <li><a href="{{ route('register') }}">Start writing</a></li>
-                        @endif
+                        <li><a href="{{ route('login') }}">Start writing</a></li>
                     @endguest
                 </ul>
             </div>

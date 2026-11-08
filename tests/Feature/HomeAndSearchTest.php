@@ -23,10 +23,54 @@ class HomeAndSearchTest extends TestCase
 
         $this->get(route('home'))
             ->assertOk()
+            ->assertSee('<aside class="site-sidebar" aria-label="Categories">', false)
             ->assertSee(route('categories.show', 'science'))
             ->assertSeeInOrder(['Newer post', 'Older post'])
             ->assertDontSee('Draft post')
             ->assertDontSee('Future post');
+    }
+
+    public function test_post_page_sidebar_highlights_the_posts_category_instead_of_a_label_above_the_title(): void
+    {
+        $science = Category::factory()->create(['name' => 'Science', 'slug' => 'science']);
+        Category::factory()->create(['name' => 'Sports', 'slug' => 'sports']);
+        $post = Post::factory()->for($science)->published()->create();
+
+        $response = $this->get(route('posts.show', $post))->assertOk()->assertDontSee('post-article-category', false);
+
+        $this->assertMatchesRegularExpression('/href="'.preg_quote(route('categories.show', 'science'), '/').'"\s+class="active"\s+aria-current="true"/', $response->getContent());
+        $this->assertDoesNotMatchRegularExpression('/href="'.preg_quote(route('categories.show', 'sports'), '/').'"\s+class="active"/', $response->getContent());
+    }
+
+    public function test_signed_in_users_get_a_dashboard_link_in_the_top_menu(): void
+    {
+        $dashboardLink = '<li><a href="'.route('dashboard').'" class="">Dashboard</a></li>';
+
+        $this->get(route('home'))->assertDontSee($dashboardLink, false);
+        $this->actingAs(User::factory()->create())->get(route('home'))->assertSee($dashboardLink, false);
+    }
+
+    public function test_start_writing_sends_guests_to_sign_in(): void
+    {
+        $this->get(route('home'))
+            ->assertSee('<a href="'.route('login').'" class="btn btn-outline-accent">Start writing</a>', false)
+            ->assertSee('<li><a href="'.route('login').'">Start writing</a></li>', false);
+    }
+
+    public function test_post_card_top_opens_the_post_and_author_strip_opens_the_author(): void
+    {
+        $public = User::factory()->withPublicBio()->create(['name' => 'Open Author', 'slug' => 'open-author']);
+        $private = User::factory()->create(['name' => 'Quiet Author', 'slug' => 'quiet-author', 'is_bio_public' => false]);
+        $first = Post::factory()->published()->for($public)->create(['title' => 'Post by open author']);
+        Post::factory()->published()->for($private)->create(['title' => 'Post by quiet author']);
+
+        $response = $this->get(route('home'))->assertOk();
+
+        $this->assertMatchesRegularExpression('/<a\s+href="'.preg_quote(route('posts.show', $first), '/').'"\s+class="post-card-main/', $response->getContent());
+        // Public bio: the strip opens the bio. Private bio: it opens the author's posts (the bio page would be a 404).
+        $response->assertSee('href="'.route('users.bio', 'open-author').'" title="About Open Author"', false)
+            ->assertSee('href="'.route('users.posts', 'quiet-author').'" title="About Quiet Author"', false)
+            ->assertDontSee(route('users.bio', 'quiet-author'));
     }
 
     public function test_home_paginates_and_hides_the_banner_after_the_first_page(): void

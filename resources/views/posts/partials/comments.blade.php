@@ -21,7 +21,7 @@
                         <div class="flex-grow-1">
                             <textarea name="body" rows="3" class="form-control mb-2" maxlength="{{ \App\Http\Requests\Posts\StoreCommentRequest::MAX_LENGTH }}"
                                       placeholder="Share your thoughts…" aria-label="Your comment" required>{{ old('parent_id') ? '' : old('body') }}</textarea>
-                            <button type="submit" class="btn btn-accent btn-sm">Post comment</button>
+                            <button type="submit" class="btn btn-outline-accent btn-sm">Post comment</button>
                         </div>
                     </div>
                 </form>
