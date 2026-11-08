@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\CommentController as AdminCommentController;
+use App\Http\Controllers\Admin\ContactMessageController as AdminContactMessageController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\PostController as AdminPostController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\NotificationController;
@@ -38,6 +40,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
 Route::get('search', SearchController::class)->name('search');
+
+Route::get('contact-us', [ContactController::class, 'create'])->name('contact');
+Route::post('contact-us', [ContactController::class, 'store'])->middleware('throttle:5,60')->name('contact.store');
+Route::view('privacy-policy', 'pages.privacy')->name('privacy');
+Route::view('terms-and-conditions', 'pages.terms')->name('terms');
 Route::get('sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
 Route::get('robots.txt', [SeoController::class, 'robots'])->name('robots');
 Route::get('categories', [CategoryController::class, 'index'])->name('categories.index');
@@ -143,6 +150,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'admin']
     Route::post('posts/{post}/unpublish', [AdminPostController::class, 'unpublish'])->name('posts.unpublish');
     Route::delete('posts/{post}', [AdminPostController::class, 'destroy'])->name('posts.destroy');
     Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('messages', [AdminContactMessageController::class, 'index'])->name('messages.index');
+    Route::get('messages/{message}', [AdminContactMessageController::class, 'show'])->name('messages.show');
+    Route::post('messages/{message}/unread', [AdminContactMessageController::class, 'markUnread'])->name('messages.unread');
+    Route::delete('messages/{message}', [AdminContactMessageController::class, 'destroy'])->name('messages.destroy');
     Route::get('comments', [AdminCommentController::class, 'index'])->name('comments.index');
     Route::post('comments/bulk', [AdminCommentController::class, 'bulk'])->name('comments.bulk');
     Route::patch('comments/{comment}/visibility', [AdminCommentController::class, 'visibility'])->name('comments.visibility');

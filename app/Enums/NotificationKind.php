@@ -18,6 +18,7 @@ enum NotificationKind: string
     case MemberRegistered = 'member_registered';
     case PostPublished = 'post_published';
     case NewComment = 'new_comment';
+    case ContactMessage = 'contact_message';
 
     /**
      * Bootstrap Icons name (public site); the admin panel maps it to Boxicons.
@@ -34,6 +35,7 @@ enum NotificationKind: string
             self::CommentHiddenByAdmin => 'bi-chat-square-dots',
             self::MemberRegistered => 'bi-person-plus',
             self::PostPublished => 'bi-journal-check',
+            self::ContactMessage => 'bi-envelope',
         };
     }
 
@@ -49,6 +51,7 @@ enum NotificationKind: string
             self::CommentHiddenByAdmin => 'bx-comment-x',
             self::MemberRegistered => 'bx-user-plus',
             self::PostPublished => 'bx-news',
+            self::ContactMessage => 'bx-envelope',
         };
     }
 }

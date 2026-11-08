@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\NotificationKind;
 use App\Enums\UserRole;
 use App\Models\Comment;
+use App\Models\ContactMessage;
 use App\Models\Post;
 use App\Models\User;
 use App\Notifications\SiteNotification;
@@ -94,6 +95,22 @@ class Notifier
                 $excerpt,
                 $this->path('admin.comments.index', ['post' => $post->getKey()]),
                 ['post_id' => $post->getKey(), 'comment_id' => $comment->getKey()],
+            ));
+        }
+    }
+
+    /**
+     * Admins hear about every message from the contact page.
+     */
+    public function contactMessageReceived(ContactMessage $message): void
+    {
+        foreach ($this->admins(array_filter([$message->user_id])) as $admin) {
+            $admin->notify(new SiteNotification(
+                NotificationKind::ContactMessage,
+                "New message from {$message->name}: {$message->subject->label()}",
+                Str::limit($message->message, self::EXCERPT_LENGTH),
+                $this->path('admin.messages.show', $message),
+                ['contact_message_id' => $message->getKey()],
             ));
         }
     }

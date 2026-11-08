@@ -164,6 +164,24 @@ Indexes: `(post_id, resolved_at)`.
 
 Rules: at most one open row per post. Further admin edits keep the first row (so the comparison stays against the author's own version). Only title, summary and body changes open a row.
 
+## contact_messages
+
+Messages sent from the contact page (`/contact-us`), read by admins in Admin > Messages. Admins reply from their own email.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | bigint PK | |
+| user_id | FK → users, null, null on delete | set when the sender was signed in |
+| name | varchar(100) | |
+| email | varchar(255) | |
+| subject | varchar(30) | `ContactSubject` enum: general_feedback, suggestion, complaint, marketing, technical_issue |
+| message | text | max 5000 characters |
+| ip_address | varchar(45), null | for blocking abuse |
+| read_at | timestamp, null | set when an admin opens it |
+| created_at, updated_at | timestamps | |
+
+Indexes: `(read_at, created_at)`.
+
 ## notifications
 
 Laravel's standard database notifications table (`php artisan make:notifications-table`), shown by the bell in the site header and the admin navbar. In-site only, no emails.

@@ -19,6 +19,11 @@ return [
     */
     'default_category_slug' => 'general',
 
+    /*
+    | Shown on the contact, privacy and terms pages (same address as the old muallam.com).
+    */
+    'contact_email' => env('MUALLAM_CONTACT_EMAIL', 'user.muallam@gmail.com'),
+
     'reserved_slugs' => [
         'admin', 'administrator', 'api', 'auth', 'bio', 'blog', 'blogs', 'categories',
         'category', 'contact', 'dashboard', 'edit', 'email', 'help', 'home', 'login',

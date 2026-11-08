@@ -6,6 +6,7 @@
         ['route' => 'admin.categories.index', 'active' => 'admin.categories.*', 'icon' => 'bx-category', 'label' => 'Categories'],
         ['route' => 'admin.posts.index', 'active' => 'admin.posts.*', 'icon' => 'bx-file', 'label' => 'Posts'],
         ['route' => 'admin.comments.index', 'active' => 'admin.comments.*', 'icon' => 'bx-comment-detail', 'label' => 'Comments'],
+        ['route' => 'admin.messages.index', 'active' => 'admin.messages.*', 'icon' => 'bx-envelope', 'label' => 'Messages'],
         ['route' => 'admin.notifications.index', 'active' => 'admin.notifications.*', 'icon' => 'bx-bell', 'label' => 'Notifications'],
     ];
 @endphp

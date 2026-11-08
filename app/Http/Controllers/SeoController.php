@@ -62,6 +62,9 @@ class SeoController extends Controller
         $urls = collect([
             ['loc' => route('home'), 'lastmod' => Post::publiclyVisible()->max('published_at')],
             ['loc' => route('categories.index'), 'lastmod' => null],
+            ['loc' => route('contact'), 'lastmod' => null],
+            ['loc' => route('privacy'), 'lastmod' => null],
+            ['loc' => route('terms'), 'lastmod' => null],
         ]);
 
         Category::query()->active()->get(['id', 'slug', 'updated_at'])->each(function (Category $category) use ($urls): void {

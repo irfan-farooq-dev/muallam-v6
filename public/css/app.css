@@ -834,6 +834,54 @@ a.post-card-author:focus-visible .post-card-author-name {
     }
 }
 
+/* Contact page */
+.contact-card {
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+}
+
+/* Spam trap: kept off-screen rather than display:none, which some bots skip. */
+.contact-trap {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+/* Privacy policy and terms */
+.legal-page {
+    line-height: 1.75;
+}
+
+.legal-page h3 {
+    font-size: 1.2rem;
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    scroll-margin-top: 90px;
+}
+
+.legal-toc {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    margin: 1.5rem 0;
+    font-size: 0.95rem;
+}
+
+.legal-toc ol {
+    columns: 2;
+    margin: 0.5rem 0 0;
+    padding-left: 1.25rem;
+}
+
+@media (max-width: 575.98px) {
+    .legal-toc ol {
+        columns: 1;
+    }
+}
+
 /* Right-hand sidebar (home and post pages): categories now, space for ads later */
 .site-sidebar {
     position: sticky;

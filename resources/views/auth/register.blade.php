@@ -78,6 +78,10 @@
                                     <span x-show="submitting" x-cloak class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
                                     Create account
                                 </button>
+                                <p class="small text-secondary text-center mt-3 mb-0">
+                                    By creating an account you agree to our <a href="{{ route('terms') }}">terms &amp; conditions</a>
+                                    and <a href="{{ route('privacy') }}">privacy policy</a>.
+                                </p>
                             </form>
 
                             @if (Route::has('login'))
