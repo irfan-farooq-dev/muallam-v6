@@ -31,6 +31,7 @@ class UserController extends Controller
             ->when(in_array($filters['role'] ?? null, array_column(UserRole::cases(), 'value'), true), fn (Builder $query) => $query->where('role', $filters['role']))
             ->when(($filters['status'] ?? null) === 'active', fn (Builder $query) => $query->where('is_active', true))
             ->when(($filters['status'] ?? null) === 'inactive', fn (Builder $query) => $query->where('is_active', false))
+            ->when(($filters['status'] ?? null) === 'online', fn (Builder $query) => $query->online())
             ->when(($filters['verified'] ?? null) === 'yes', fn (Builder $query) => $query->whereNotNull('email_verified_at'))
             ->when(($filters['verified'] ?? null) === 'no', fn (Builder $query) => $query->whereNull('email_verified_at'))
             ->latest()
@@ -38,7 +39,13 @@ class UserController extends Controller
             ->paginate(self::PER_PAGE)
             ->withQueryString();
 
-        return view('admin.users.index', ['users' => $users, 'search' => $search, 'filters' => $filters, 'roles' => UserRole::cases()]);
+        return view('admin.users.index', [
+            'users' => $users,
+            'search' => $search,
+            'filters' => $filters,
+            'roles' => UserRole::cases(),
+            'onlineCount' => User::query()->online()->count(),
+        ]);
     }
 
     public function edit(User $user): View

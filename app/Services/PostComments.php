@@ -67,8 +67,8 @@ class PostComments
             ->whereNull('parent_id')
             ->tap($visibility)
             ->with([
-                'user:id,name,slug,avatar,is_bio_public',
-                'replies' => fn ($query) => $visibility($query)->with('user:id,name,slug,avatar,is_bio_public')->oldest()->oldest('id'),
+                'user:id,name,slug,avatar,is_bio_public,last_seen_at,show_online_status',
+                'replies' => fn ($query) => $visibility($query)->with('user:id,name,slug,avatar,is_bio_public,last_seen_at,show_online_status')->oldest()->oldest('id'),
             ])
             ->oldest()
             ->oldest('id')

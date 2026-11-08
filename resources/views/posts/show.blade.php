@@ -96,7 +96,7 @@
                     @endif
 
                     <div class="author-box d-flex gap-3 align-items-start mt-4 p-4">
-                        <x-user-avatar :user="$post->user" :size="56" />
+                        <x-user-avatar :user="$post->user" :size="56" :online="$post->user->appearsOnlineTo(auth()->user())" />
                         <div>
                             <div class="small text-secondary">Written by</div>
                             <div class="fw-semibold mb-1">{{ $post->user->name }}</div>

@@ -23,6 +23,8 @@ Conventions
 | avatar | varchar(255), null | path on the public disk |
 | slug_changed_at | timestamp, null | one change per 30 days |
 | is_active | boolean, default true | admin can block a user |
+| last_seen_at | timestamp, null, indexed | last activity (page view or the bell's once-a-minute check), written at most once a minute; "online" = within `muallam.online_minutes` (5) |
+| show_online_status | boolean, default true | member can hide their green dot and "Last seen" from others (admins still see it) |
 | remember_token | varchar(100), null | |
 | created_at, updated_at | timestamps | |
 

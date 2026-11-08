@@ -20,6 +20,12 @@ return [
     'default_category_slug' => 'general',
 
     /*
+    | A member counts as online (green dot) when they did something on the site within this many minutes.
+    | Their open tab checks in every minute (the notification bell), so 5 minutes allows for a missed check.
+    */
+    'online_minutes' => 5,
+
+    /*
     | Shown on the contact, privacy and terms pages (same address as the old muallam.com).
     */
     'contact_email' => env('MUALLAM_CONTACT_EMAIL', 'user.muallam@gmail.com'),

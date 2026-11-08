@@ -2,6 +2,12 @@
 
 @section('title', 'Users')
 
+@section('page_actions')
+    <a href="{{ route('admin.users.index', ['status' => 'online']) }}" class="btn btn-sm btn-outline-success" data-online-count="{{ $onlineCount }}">
+        <span class="online-dot-inline"></span>{{ $onlineCount }} online now
+    </a>
+@endsection
+
 @section('content')
     <div class="card">
         <div class="card-body border-bottom">
@@ -25,6 +31,7 @@
                         <option value="">Any</option>
                         <option value="active" @selected(($filters['status'] ?? '') === 'active')>Active</option>
                         <option value="inactive" @selected(($filters['status'] ?? '') === 'inactive')>Deactivated</option>
+                        <option value="online" @selected(($filters['status'] ?? '') === 'online')>Online now</option>
                     </select>
                 </div>
                 <div class="col-6 col-md-2">
@@ -53,6 +60,7 @@
                         <th>Status</th>
                         <th class="text-end">Posts</th>
                         <th>Joined</th>
+                        <th>Last seen</th>
                         <th class="text-end">Actions</th>
                     </tr>
                 </thead>
@@ -61,7 +69,7 @@
                         <tr>
                             <td>
                                 <div class="d-flex align-items-center gap-2">
-                                    <x-user-avatar :user="$user" :size="36" />
+                                    <x-user-avatar :user="$user" :size="36" :online="$user->isOnline()" />
                                     <div>
                                         <a href="{{ route('admin.users.edit', $user) }}" class="fw-semibold text-body">{{ $user->name }}</a>
                                         @if ($user->is(auth()->user()))
@@ -89,12 +97,24 @@
                                 @endif
                             </td>
                             <td><span title="{{ $user->created_at->format('j M Y, g:i a') }}">{{ $user->created_at->format('j M Y') }}</span></td>
+                            <td>
+                                @if ($user->isOnline())
+                                    <span class="text-success fw-medium">Online now</span>
+                                @elseif ($user->last_seen_at)
+                                    <span title="{{ $user->last_seen_at->format('j M Y, g:i a') }}">{{ $user->last_seen_at->diffForHumans() }}</span>
+                                @else
+                                    <span class="text-muted">Never</span>
+                                @endif
+                                @unless ($user->show_online_status)
+                                    <i class="bx bx-hide text-muted ms-1" title="Hides their online status from other members"></i>
+                                @endunless
+                            </td>
                             <td class="text-end">
                                 <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-sm btn-outline-primary"><i class="bx bx-edit-alt me-1"></i>Edit</a>
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="text-center text-muted py-4">No users match.</td></tr>
+                        <tr><td colspan="7" class="text-center text-muted py-4">No users match.</td></tr>
                     @endforelse
                 </tbody>
             </table>

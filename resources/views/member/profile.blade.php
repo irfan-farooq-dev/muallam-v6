@@ -183,6 +183,15 @@
                             <label class="form-check-label" for="is_bio_public">Show my bio on my public profile page</label>
                         </div>
                     </div>
+
+                    <div class="col-12">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="show_online_status" name="show_online_status" value="1"
+                                   @checked(old('show_online_status', $user->show_online_status))>
+                            <label class="form-check-label" for="show_online_status">Show when I'm online</label>
+                            <div class="form-text">Others see a green dot on your photo while you're on the site, and "Last seen …" on your bio page. Admins can always see when you were last active.</div>
+                        </div>
+                    </div>
                 </div>
 
                 <button type="submit" class="btn btn-accent mt-4">Save details</button>

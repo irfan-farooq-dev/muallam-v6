@@ -26,6 +26,7 @@ class UpdateProfileRequest extends FormRequest
             'bio' => trim((string) $this->input('bio')) ?: null,
             'gender' => $this->input('gender') ?: null,
             'is_bio_public' => $this->boolean('is_bio_public'),
+            'show_online_status' => $this->boolean('show_online_status'),
         ]);
     }
 
@@ -42,6 +43,7 @@ class UpdateProfileRequest extends FormRequest
             'gender' => ['nullable', Rule::enum(Gender::class)],
             'bio' => ['nullable', 'string', 'max:'.self::BIO_MAX],
             'is_bio_public' => ['boolean'],
+            'show_online_status' => ['boolean'],
         ];
     }
 

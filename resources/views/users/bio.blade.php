@@ -29,9 +29,13 @@
                     <div class="card settings-card">
                         <div class="card-body p-4 p-md-5">
                             <div class="d-flex align-items-center gap-3 mb-4">
-                                <x-user-avatar :user="$profileUser" :size="88" />
+                                @php($presence = $profileUser->presenceFor(auth()->user()))
+                                <x-user-avatar :user="$profileUser" :size="88" :online="$profileUser->appearsOnlineTo(auth()->user())" />
                                 <div>
                                     <h2 class="h3 mb-1">{{ $profileUser->name }}</h2>
+                                    @if ($presence)
+                                        <div @class(['presence-label small mb-1', 'is-online' => $profileUser->isOnline()]) data-presence>{{ $presence }}</div>
+                                    @endif
                                     <div class="text-secondary small">
                                         Member since {{ $profileUser->created_at->format('F Y') }}
                                         &middot; <a href="{{ route('users.posts', $profileUser->slug) }}">Posts by {{ $profileUser->name }}</a>

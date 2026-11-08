@@ -4,7 +4,7 @@
         <p class="text-secondary fst-italic small mb-0">This comment was removed.</p>
     @else
         <div class="d-flex gap-2">
-            <x-user-avatar :user="$comment->user" :size="36" />
+            <x-user-avatar :user="$comment->user" :size="36" :online="$comment->user->appearsOnlineTo(auth()->user())" />
             <div class="flex-grow-1" style="min-width: 0;">
                 <div class="d-flex flex-wrap align-items-baseline gap-2 small">
                     <a href="{{ route('users.posts', $comment->user->slug) }}" class="fw-semibold text-body">{{ $comment->user->name }}</a>

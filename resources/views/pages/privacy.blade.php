@@ -50,7 +50,7 @@
                         <p><strong>When you fill in your profile (optional):</strong> phone number, gender, a short bio, a profile photo and your profile address (for example <code>/users/your-name</code>).</p>
                         <p><strong>When you use the site:</strong> the posts, images, comments and likes you add. If you share a restricted post, we store the email addresses you invite so they can be sent an access link.</p>
                         <p><strong>When you contact us:</strong> your name, email address, the subject and your message, plus the IP address it was sent from (to block abuse).</p>
-                        <p><strong>Automatically:</strong> your IP address and browser details are used briefly to keep the site secure, for example to slow down repeated failed sign-ins. We count how many times a post is read, once per visit, without recording who read it.</p>
+                        <p><strong>Automatically:</strong> your IP address and browser details are used briefly to keep the site secure, for example to slow down repeated failed sign-ins. We count how many times a post is read, once per visit, without recording who read it. While you are signed in, we note when you were last active (updated about once a minute).</p>
 
                         <h3 id="use">3. How we use it</h3>
                         <ul>
@@ -62,7 +62,7 @@
                         </ul>
 
                         <h3 id="public">4. What other people can see</h3>
-                        <p>Published posts are public, together with your name, profile photo, author page and the post's like and comment counts. Your comments are public on the posts where you write them. Your bio is shown only if you choose to make it public in your profile.</p>
+                        <p>Published posts are public, together with your name, profile photo, author page and the post's like and comment counts. Your comments are public on the posts where you write them. Your bio is shown only if you choose to make it public in your profile. Other people can see when you are online (a green dot on your photo) and when you were last active, unless you turn off "Show when I'm online" in your profile; admins can always see your last activity.</p>
                         <p>Your email address, phone number and gender are never shown publicly. The list of posts you have liked is visible only to you. Drafts and private posts are visible only to you and to site admins, and restricted posts only to the people you invite.</p>
 
                         <h3 id="cookies">5. Cookies and third parties</h3>
@@ -91,7 +91,7 @@
                         <h3 id="rights">8. Your choices and rights</h3>
                         <ul>
                             <li>View and change your details, photo, bio and profile address at any time from your <a href="{{ route('profile.edit') }}">profile</a>.</li>
-                            <li>Hide your bio from the public, or delete any of your posts and comments.</li>
+                            <li>Hide your bio or your online status from the public, or delete any of your posts and comments.</li>
                             <li>Ask us for a copy of your personal information, to correct it, or to delete your account, by writing to <a href="mailto:{{ $email }}">{{ $email }}</a> from the email address on your account.</li>
                         </ul>
 

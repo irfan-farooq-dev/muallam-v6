@@ -100,3 +100,28 @@ h1, h2, h3, h4, h5, h6,
     overflow-wrap: anywhere;
     background: #fafbfc;
 }
+
+/* Online status (same look as the public site) */
+.user-avatar-presence {
+    position: relative;
+    display: inline-flex;
+    flex: 0 0 auto;
+}
+
+.online-dot {
+    position: absolute;
+    right: 2%;
+    bottom: 2%;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 0 2px #fff;
+}
+
+.online-dot-inline {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-right: 0.4rem;
+    border-radius: 50%;
+    background: #22c55e;
+}
