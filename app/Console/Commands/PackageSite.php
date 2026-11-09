@@ -12,10 +12,13 @@ use RuntimeException;
 /**
  * Builds the zip for hosting without a terminal (cPanel): the committed code plus production-only
  * Composer packages, split into the app folder (outside the web root) and public_html.
+ * With --keep-public, public/ stays inside the app folder instead, for a (sub)domain whose
+ * document root is <app-folder>/public, and the zip never touches public_html.
  */
 #[Signature('site:package
     {--ref=HEAD : Git commit, branch or tag to package}
     {--app-folder=muallam : Name of the app folder next to public_html on the server}
+    {--keep-public : Keep public/ inside the app folder (document root is <app-folder>/public)}
     {--output= : Folder for the zip (default: a "muallam-deploy" folder next to this project)}')]
 #[Description('Build the upload zip for cPanel hosting (no SSH needed)')]
 class PackageSite extends Command
@@ -66,18 +69,24 @@ class PackageSite extends Command
         }
         File::delete(File::glob("{$app}/bootstrap/cache/*.php"));
 
-        File::moveDirectory("{$app}/public", $publicHtml);
-        $this->pointIndexAtAppFolder("{$publicHtml}/index.php", $appFolder);
+        $keepPublic = (bool) $this->option('keep-public');
+
+        if (! $keepPublic) {
+            File::moveDirectory("{$app}/public", $publicHtml);
+            $this->pointIndexAtAppFolder("{$publicHtml}/index.php", $appFolder);
+        }
         File::put("{$app}/RELEASE", $release.PHP_EOL);
 
         File::ensureDirectoryExists($output);
-        $zip = "{$output}/muallam-{$release}.zip";
+        $zip = "{$output}/{$appFolder}-{$release}.zip";
         $this->line('Zipping...');
-        $this->runProcess(['zip', '-rqy', $zip, $appFolder, 'public_html'], $work, 300);
+        $this->runProcess(['zip', '-rqy', $zip, $appFolder, ...($keepPublic ? [] : ['public_html'])], $work, 300);
         File::deleteDirectory($work);
 
         $this->info("Package ready: {$zip}");
-        $this->line('Upload it to your hosting home folder (next to public_html), extract it, and the scheduler finishes the deploy within a minute.');
+        $this->line($keepPublic
+            ? "Upload it to your hosting home folder, extract it (it fills {$appFolder}/ only), and the scheduler finishes the deploy within a minute."
+            : 'Upload it to your hosting home folder (next to public_html), extract it, and the scheduler finishes the deploy within a minute.');
 
         return self::SUCCESS;
     }
