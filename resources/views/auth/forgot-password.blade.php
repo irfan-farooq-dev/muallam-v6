@@ -46,5 +46,5 @@
 @endsection
 
 @push('scripts')
-    <script src="{{ asset('js/auth-form.js') }}"></script>
+    <script src="@versionedAsset('js/auth-form.js')"></script>
 @endpush

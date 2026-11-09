@@ -125,3 +125,16 @@ h1, h2, h3, h4, h5, h6,
     border-radius: 50%;
     background: #22c55e;
 }
+
+/*
+ * No glow around fields (same as the public site). Sneat's theme adds focus shadows to inputs, selects and
+ * input groups in several states; !important switches them all off at once. The border colour still marks the active field.
+ */
+.form-control:focus,
+.form-select:focus,
+.input-group:focus-within,
+.input-group:focus-within .form-control,
+.input-group:focus-within .form-select,
+.input-group:focus-within .input-group-text {
+    box-shadow: none !important;
+}

@@ -20,9 +20,9 @@
     <link rel="stylesheet" href="{{ asset('frontend/vendor/bootstrap-icons/bootstrap-icons.css') }}">
     <link rel="stylesheet" href="{{ asset('frontend/vendor/aos/aos.css') }}">
     <link rel="stylesheet" href="{{ asset('frontend/css/main.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    <link rel="stylesheet" href="@versionedAsset('css/app.css')">
     @auth
-        <link rel="stylesheet" href="{{ asset('css/notifications.css') }}">
+        <link rel="stylesheet" href="@versionedAsset('css/notifications.css')">
     @endauth
     @stack('styles')
 

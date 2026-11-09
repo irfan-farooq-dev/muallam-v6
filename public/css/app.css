@@ -193,6 +193,28 @@ a:hover {
 }
 
 /*
+ * No glow around fields: Bootstrap's focus ring (box-shadow) is switched off for inputs, text areas and
+ * selects in every state. The border colour still shows which field is active (blue), invalid (red) or valid (green).
+ */
+.form-control:focus,
+.form-select:focus,
+.form-control.is-valid:focus,
+.form-control.is-invalid:focus,
+.form-select.is-valid:focus,
+.form-select.is-invalid:focus,
+.was-validated .form-control:valid:focus,
+.was-validated .form-control:invalid:focus,
+.was-validated .form-select:valid:focus,
+.was-validated .form-select:invalid:focus {
+    box-shadow: none;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--accent-color);
+}
+
+/*
  * Floating labels in the old site's style: the label starts inside the box and, once the field is focused
  * or filled, moves up onto the top border (smaller, blue while typing). Restyles Bootstrap's .form-floating,
  * so the markup stays standard.
