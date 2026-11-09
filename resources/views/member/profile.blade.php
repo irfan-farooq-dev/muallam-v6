@@ -262,7 +262,7 @@
 @endsection
 
 @push('scripts')
-    <script src="{{ asset('js/auth-form.js') }}"></script>
+    <script src="@versionedAsset('js/auth-form.js')"></script>
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('slugForm', ({ current, initial, checkUrl, serverError }) => ({

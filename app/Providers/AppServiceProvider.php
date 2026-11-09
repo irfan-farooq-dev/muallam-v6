@@ -4,12 +4,14 @@ namespace App\Providers;
 
 use App\Models\Category;
 use App\Models\Post;
+use App\Services\AssetVersions;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -22,7 +24,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(AssetVersions::class);
     }
 
     /**
@@ -31,6 +33,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Paginator::useBootstrapFive();
+
+        // Our own CSS/JS with a version in the address: @versionedAsset('css/app.css') → /css/app.css?v=1731140066
+        Blade::directive('versionedAsset', fn (string $path): string => "<?php echo e(app(\\App\\Services\\AssetVersions::class)->url({$path})); ?>");
 
         View::composer('partials.header', fn ($view) => $view->with('navCategories', Category::forNavigation()));
         View::composer('partials.category-sidebar', fn ($view) => $view->with('sidebarCategories', Category::forNavigation()));

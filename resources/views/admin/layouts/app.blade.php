@@ -25,8 +25,8 @@
     <link rel="stylesheet" href="{{ asset('admin/vendor/css/core-muallam.css') }}">
     <link rel="stylesheet" href="{{ asset('admin/vendor/css/theme-muallam.css') }}">
     <link rel="stylesheet" href="{{ asset('admin/vendor/libs/perfect-scrollbar/perfect-scrollbar.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/admin.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/notifications.css') }}">
+    <link rel="stylesheet" href="@versionedAsset('css/admin.css')">
+    <link rel="stylesheet" href="@versionedAsset('css/notifications.css')">
     @stack('styles')
 
     <script src="{{ asset('admin/vendor/js/helpers.js') }}"></script>
