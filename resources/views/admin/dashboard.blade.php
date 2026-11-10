@@ -144,7 +144,7 @@
 @endsection
 
 @push('scripts')
-    <script src="{{ asset('admin/vendor/libs/apex-charts/apexcharts.js') }}"></script>
+    <script src="{{ asset('admin-theme/vendor/libs/apex-charts/apexcharts.js') }}"></script>
     <script>
         (() => {
             const chart = @js($chart);

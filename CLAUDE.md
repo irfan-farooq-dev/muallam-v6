@@ -156,7 +156,7 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 
 # Muallam project notes
 
-- Frontend has no build step: no Vite, Tailwind or npm. Ignore the "Frontend Bundling" note above. Pages are Blade + Bootstrap 5.3 + Alpine.js, loaded with `asset()` from `public/` (`frontend/` = ZenBlog, `admin/` = Sneat, `shared/`, `vendor/alpinejs`, `vendor/quill`).
+- Frontend has no build step: no Vite, Tailwind or npm. Ignore the "Frontend Bundling" note above. Pages are Blade + Bootstrap 5.3 + Alpine.js, loaded with `asset()` from `public/` (`frontend/` = ZenBlog, `admin-theme/` = Sneat (not `admin/`: a public folder named like a route gets a 403 from Apache), `shared/`, `vendor/alpinejs`, `vendor/quill`).
 - The approved database design is in `docs/database.md`. Follow it when writing migrations and models.
 - `role` and `status` columns are varchar validated by PHP backed enums, not MySQL ENUM.
 - Deployment target is the muallam.com host, not Laravel Cloud.

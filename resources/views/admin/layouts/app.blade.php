@@ -4,7 +4,7 @@
 --}}
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="light-style layout-menu-fixed" dir="ltr"
-      data-theme="theme-default" data-assets-path="{{ asset('admin') }}/" data-template="vertical-menu-template-free">
+      data-theme="theme-default" data-assets-path="{{ asset('admin-theme') }}/" data-template="vertical-menu-template-free">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -22,14 +22,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="{{ asset('shared/fonts/boxicons.css') }}">
-    <link rel="stylesheet" href="{{ asset('admin/vendor/css/core-muallam.css') }}">
-    <link rel="stylesheet" href="{{ asset('admin/vendor/css/theme-muallam.css') }}">
-    <link rel="stylesheet" href="{{ asset('admin/vendor/libs/perfect-scrollbar/perfect-scrollbar.css') }}">
+    <link rel="stylesheet" href="{{ asset('admin-theme/vendor/css/core-muallam.css') }}">
+    <link rel="stylesheet" href="{{ asset('admin-theme/vendor/css/theme-muallam.css') }}">
+    <link rel="stylesheet" href="{{ asset('admin-theme/vendor/libs/perfect-scrollbar/perfect-scrollbar.css') }}">
     <link rel="stylesheet" href="@versionedAsset('css/admin.css')">
     <link rel="stylesheet" href="@versionedAsset('css/notifications.css')">
     @stack('styles')
 
-    <script src="{{ asset('admin/vendor/js/helpers.js') }}"></script>
+    <script src="{{ asset('admin-theme/vendor/js/helpers.js') }}"></script>
     <script defer src="{{ asset('vendor/alpinejs/alpine.min.js') }}"></script>
 </head>
 <body>
@@ -62,12 +62,12 @@
         <div class="layout-overlay layout-menu-toggle"></div>
     </div>
 
-    <script src="{{ asset('admin/vendor/libs/jquery/jquery.js') }}"></script>
-    <script src="{{ asset('admin/vendor/libs/popper/popper.js') }}"></script>
-    <script src="{{ asset('admin/vendor/js/bootstrap.js') }}"></script>
-    <script src="{{ asset('admin/vendor/libs/perfect-scrollbar/perfect-scrollbar.js') }}"></script>
-    <script src="{{ asset('admin/vendor/js/menu.js') }}"></script>
-    <script src="{{ asset('admin/js/main.js') }}"></script>
+    <script src="{{ asset('admin-theme/vendor/libs/jquery/jquery.js') }}"></script>
+    <script src="{{ asset('admin-theme/vendor/libs/popper/popper.js') }}"></script>
+    <script src="{{ asset('admin-theme/vendor/js/bootstrap.js') }}"></script>
+    <script src="{{ asset('admin-theme/vendor/libs/perfect-scrollbar/perfect-scrollbar.js') }}"></script>
+    <script src="{{ asset('admin-theme/vendor/js/menu.js') }}"></script>
+    <script src="{{ asset('admin-theme/js/main.js') }}"></script>
     @stack('scripts')
 </body>
 </html>
