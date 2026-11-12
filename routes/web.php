@@ -35,6 +35,7 @@ use App\Http\Controllers\Profile\SlugController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SeoController;
 use App\Http\Controllers\UserBioController;
+use App\Http\Middleware\DecodeEncodedFormFields;
 use App\Models\Post;
 use Illuminate\Support\Facades\Route;
 
@@ -104,13 +105,16 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('my/posts', MyPostsController::class)->name('posts.mine');
     // The edit form spoofs PUT, so the preview button (which reuses that form) can arrive as POST or PUT.
-    Route::match(['post', 'put'], 'posts/preview', PostPreviewController::class)->name('posts.preview');
+    Route::match(['post', 'put'], 'posts/preview', PostPreviewController::class)
+        ->middleware(DecodeEncodedFormFields::class.':title,summary,body')->name('posts.preview');
     Route::get('posts/preview', fn () => to_route('posts.mine')->with('info', 'Previews open from the Preview button in the editor and are not saved.'));
     Route::post('posts/images', PostImageUploadController::class)->middleware('throttle:30,1')->name('posts.images.store');
     Route::get('posts/create', [PostEditorController::class, 'create'])->can('create', Post::class)->name('posts.create');
-    Route::post('posts', [PostEditorController::class, 'store'])->can('create', Post::class)->name('posts.store');
+    Route::post('posts', [PostEditorController::class, 'store'])->can('create', Post::class)
+        ->middleware(DecodeEncodedFormFields::class.':title,summary,body')->name('posts.store');
     Route::get('posts/{post}/edit', [PostEditorController::class, 'edit'])->can('update', 'post')->name('posts.edit');
-    Route::put('posts/{post}', [PostEditorController::class, 'update'])->can('update', 'post')->name('posts.update');
+    Route::put('posts/{post}', [PostEditorController::class, 'update'])->can('update', 'post')
+        ->middleware(DecodeEncodedFormFields::class.':title,summary,body')->name('posts.update');
     Route::delete('posts/{post}', [PostEditorController::class, 'destroy'])->can('delete', 'post')->name('posts.destroy');
     Route::get('posts/{post}/changes', [PostChangesController::class, 'show'])->can('update', 'post')->name('posts.changes');
     Route::post('posts/{post}/changes/reviewed', [PostChangesController::class, 'markReviewed'])

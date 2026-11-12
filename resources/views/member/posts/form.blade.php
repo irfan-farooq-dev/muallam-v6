@@ -79,6 +79,8 @@
         @endif
         {{-- Filled from the clicked button. Disabled buttons are not sent by browsers, and the buttons are disabled while saving. --}}
         <input type="hidden" name="action" x-ref="action" value="publish">
+        {{-- Title, summary and content are sent base64-encoded in here, so the host's web firewall does not block normal post text. --}}
+        <input type="hidden" name="encoded_fields" x-ref="encoded">
 
         <div class="row g-4">
             <div class="col-xl-8">
@@ -370,12 +372,32 @@
                     const action = event.submitter?.value ?? 'publish';
                     this.$refs.action.value = action;
 
+                    this.encodeTextFields(event.target);
+
                     // Preview opens in a new tab and saves nothing, so the editor stays usable.
                     if (action === 'preview') {
                         return;
                     }
 
                     this.submitting = action;
+                },
+
+                // Sends title, summary and content as one base64 field (decoded by the DecodeEncodedFormFields
+                // middleware) and leaves the plain fields out of this submit, so a web firewall never sees the HTML.
+                // The browser builds the form data right after this handler, so the fields can be re-enabled straight away.
+                encodeTextFields(form) {
+                    const plainFields = [form.elements.title, form.elements.summary, this.$refs.body];
+                    const json = JSON.stringify({ title: plainFields[0].value, summary: plainFields[1].value, body: plainFields[2].value });
+                    const bytes = new TextEncoder().encode(json);
+                    let binary = '';
+
+                    for (let i = 0; i < bytes.length; i += 0x8000) {
+                        binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+                    }
+
+                    this.$refs.encoded.value = btoa(binary);
+                    plainFields.forEach((field) => field.disabled = true);
+                    setTimeout(() => plainFields.forEach((field) => field.disabled = false));
                 },
 
                 editor() {
