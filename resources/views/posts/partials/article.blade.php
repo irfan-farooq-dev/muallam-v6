@@ -18,7 +18,7 @@
                 <span class="fw-semibold">{{ $author->name }}</span>
             @endif
             <span>&middot;</span>
-            <time datetime="{{ $post->published_at->toIso8601String() }}">{{ $post->published_at->format('j F Y') }}</time>
+            <x-local-time :at="$post->published_at" format="long-date" />
         </div>
     </header>
 

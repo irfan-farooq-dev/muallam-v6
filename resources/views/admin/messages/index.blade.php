@@ -60,7 +60,7 @@
                             <td style="min-width: 260px;">
                                 <a href="{{ route('admin.messages.show', $message) }}" class="text-body small">{{ \Illuminate\Support\Str::limit($message->message, 110) }}</a>
                             </td>
-                            <td class="text-nowrap small"><span title="{{ $message->created_at->format('j M Y, g:i a') }}">{{ $message->created_at->diffForHumans() }}</span></td>
+                            <td class="text-nowrap small"><x-local-time :at="$message->created_at" relative /></td>
                         </tr>
                     @empty
                         <tr><td colspan="4" class="text-center text-muted py-4">No messages.</td></tr>

@@ -11,4 +11,6 @@
         };
 @endphp
 
-<span {{ $attributes->class(['badge', 'post-status-badge', $badge['class']]) }} @if ($badge['title']) title="{{ $badge['title'] }}" @endif>{{ $badge['label'] }}</span>
+{{-- A scheduled post's go-live time is put in the reader's time zone by public/js/local-time.js. --}}
+<span {{ $attributes->class(['badge', 'post-status-badge', $badge['class']]) }} @if ($badge['title']) title="{{ $badge['title'] }}" @endif
+      @if ($post->isScheduled()) datetime="{{ $post->published_at->toIso8601String() }}" data-local-time="datetime" data-local-title data-local-title-prefix="Goes live " @endif>{{ $badge['label'] }}</span>

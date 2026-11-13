@@ -71,7 +71,7 @@ class PublicPostPageTest extends TestCase
         $post = Post::factory()->for($author)->scheduled()->create();
 
         $this->actingAs($author)->get(route('posts.show', $post))
-            ->assertSee('Scheduled to go live on '.$post->published_at->format('j M Y, g:i a'));
+            ->assertSee('Scheduled to go live on <time datetime="'.$post->published_at->toIso8601String().'" data-local-time="datetime"', false);
     }
 
     public function test_views_are_counted_once_per_visitor_session(): void

@@ -68,6 +68,7 @@
     <script src="{{ asset('admin-theme/vendor/libs/perfect-scrollbar/perfect-scrollbar.js') }}"></script>
     <script src="{{ asset('admin-theme/vendor/js/menu.js') }}"></script>
     <script src="{{ asset('admin-theme/js/main.js') }}"></script>
+    <script src="@versionedAsset('js/local-time.js')"></script>
     @stack('scripts')
 </body>
 </html>

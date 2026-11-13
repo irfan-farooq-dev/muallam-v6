@@ -16,7 +16,6 @@ use App\Services\PostSlugGenerator;
 use Carbon\CarbonInterface;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\View\View;
 
 class PostEditorController extends Controller
@@ -50,7 +49,7 @@ class PostEditorController extends Controller
             $this->notifier->postPublished($post, $request->user());
         }
 
-        return redirect()->route('posts.edit', $post)->with('success', $this->savedMessage($post, 'created'));
+        return $this->redirectAfterSave($post, $request->user(), $this->savedMessage($post, 'created', $request->writerTimezone()));
     }
 
     public function edit(Post $post): View
@@ -81,9 +80,9 @@ class PostEditorController extends Controller
 
         $message = $wasLive && $post->status === PostStatus::Draft
             ? 'Post unpublished. It is a draft again, so only you can see it.'
-            : $this->savedMessage($post, 'saved');
+            : $this->savedMessage($post, 'saved', $request->writerTimezone());
 
-        return redirect()->route('posts.edit', $post)->with('success', $message);
+        return $this->redirectAfterSave($post, $request->user(), $message);
     }
 
     public function destroy(Request $request, Post $post): RedirectResponse
@@ -151,7 +150,7 @@ class PostEditorController extends Controller
         }
 
         if ($request->wantsSchedule()) {
-            return Carbon::parse($request->validated('scheduled_at'));
+            return $request->scheduledAt();
         }
 
         $alreadyLive = $post->exists && $post->status === PostStatus::Published && $post->published_at?->isPast();
@@ -159,10 +158,28 @@ class PostEditorController extends Controller
         return $alreadyLive ? $post->published_at : now();
     }
 
-    private function savedMessage(Post $post, string $verb): string
+    /**
+     * Back to the list once the post is saved. A restricted post opens its invite section instead, since inviting
+     * readers is the next step; an admin editing someone else's post returns to the admin post list.
+     */
+    private function redirectAfterSave(Post $post, User $editor, string $message): RedirectResponse
+    {
+        $target = match (true) {
+            $post->status === PostStatus::Restricted => route('posts.edit', $post).'#sharing',
+            $editor->is($post->user) => route('posts.mine'),
+            default => route('admin.posts.index'),
+        };
+
+        return redirect()->to($target)->with('success', $message);
+    }
+
+    /**
+     * The go-live time is given in the writer's own time zone, the one they typed it in.
+     */
+    private function savedMessage(Post $post, string $verb, string $writerTimezone): string
     {
         return match (true) {
-            $post->isScheduled() => "Post {$verb}. It will go live on {$post->published_at->format('j M Y, g:i a')}.",
+            $post->isScheduled() => "Post {$verb}. It will go live on {$post->published_at->copy()->setTimezone($writerTimezone)->format('j M Y, g:i a')}.",
             $post->status === PostStatus::Published => "Post {$verb} and published.",
             $post->status === PostStatus::Private => "Post {$verb}. It is private, so only you can see it.",
             $post->status === PostStatus::Restricted => "Post {$verb}. It is restricted: only people you invite (with the password) can read it.",

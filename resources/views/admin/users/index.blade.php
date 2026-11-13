@@ -96,12 +96,12 @@
                                     0
                                 @endif
                             </td>
-                            <td><span title="{{ $user->created_at->format('j M Y, g:i a') }}">{{ $user->created_at->format('j M Y') }}</span></td>
+                            <td><x-local-time :at="$user->created_at" format="date" /></td>
                             <td>
                                 @if ($user->isOnline())
                                     <span class="text-success fw-medium">Online now</span>
                                 @elseif ($user->last_seen_at)
-                                    <span title="{{ $user->last_seen_at->format('j M Y, g:i a') }}">{{ $user->last_seen_at->diffForHumans() }}</span>
+                                    <x-local-time :at="$user->last_seen_at" relative />
                                 @else
                                     <span class="text-muted">Never</span>
                                 @endif

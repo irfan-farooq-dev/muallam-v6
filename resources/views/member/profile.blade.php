@@ -73,7 +73,7 @@
             @endunless
 
             @if ($nextSlugChange)
-                <p class="small text-secondary mb-0"><i class="bi bi-clock me-1"></i>You can change your link again on {{ $nextSlugChange->format('j M Y') }}.</p>
+                <p class="small text-secondary mb-0"><i class="bi bi-clock me-1"></i>You can change your link again on <x-local-time :at="$nextSlugChange" format="date" />.</p>
             @else
                 <form method="POST" action="{{ route('profile.slug.update') }}"
                       x-data="slugForm(@js(['current' => $user->slug, 'initial' => old('slug', $user->slug), 'checkUrl' => route('profile.slug.check'), 'serverError' => $errors->updateSlug->first('slug')]))"

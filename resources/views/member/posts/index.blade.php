@@ -48,7 +48,7 @@
                             {{ $post->category?->name ?? 'Uncategorised' }}
                             &middot; updated {{ $post->updated_at->diffForHumans() }}
                             @if ($post->isScheduled())
-                                &middot; goes live {{ $post->published_at->format('j M Y, g:i a') }}
+                                &middot; goes live <x-local-time :at="$post->published_at" />
                             @endif
                         </small>
                     </div>

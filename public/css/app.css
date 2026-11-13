@@ -307,6 +307,29 @@ a:hover {
     padding: 32px 0 64px;
 }
 
+.member-container {
+    padding-left: 24px;
+    padding-right: 24px;
+}
+
+/* Fixed-width sidebar on large screens; the content column takes the rest (min-width lets wide tables and the editor shrink). */
+@media (min-width: 992px) {
+    .member-container {
+        padding-left: 32px;
+        padding-right: 48px;
+    }
+
+    .member-sidebar {
+        width: 240px;
+        padding-right: 0;
+    }
+
+    .member-main {
+        min-width: 0;
+        padding-left: 48px;
+    }
+}
+
 .member-nav-links {
     flex-direction: column;
     gap: 2px;
@@ -452,7 +475,7 @@ a.post-card-author:focus-visible .post-card-author-name {
 .post-editor .ql-container.ql-snow {
     border-radius: 0 0 8px 8px;
     border-color: #dee2e6;
-    min-height: 360px;
+    min-height: 480px;
     font-family: var(--default-font);
     font-size: 1rem;
 }
@@ -460,6 +483,129 @@ a.post-card-author:focus-visible .post-card-author-name {
 .post-editor.is-invalid .ql-toolbar.ql-snow,
 .post-editor.is-invalid .ql-container.ql-snow {
     border-color: var(--bs-form-invalid-border-color);
+}
+
+/* Editor steps: 1 Write, 2 Publishing options */
+.editor-steps {
+    align-items: center;
+}
+
+.editor-step {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 0;
+    background: none;
+    padding: 4px 0;
+    color: var(--bs-secondary-color);
+    font-family: var(--nav-font);
+    font-weight: 600;
+}
+
+.editor-step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid #dee2e6;
+    font-size: 0.85rem;
+}
+
+.editor-step.active {
+    color: var(--heading-color);
+}
+
+.editor-step.active .editor-step-number {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    color: var(--contrast-color);
+}
+
+.editor-step-divider {
+    width: 40px;
+    height: 2px;
+    background: #dee2e6;
+}
+
+.editor-option + .editor-option {
+    margin-top: 10px;
+}
+
+/* Always-visible explanation under an option: smaller and dimmer than the option itself. */
+.option-help {
+    font-size: 0.8rem;
+    color: var(--bs-secondary-color);
+}
+
+/* "?" beside an option; its explanation shows as a tooltip. */
+.help-tip {
+    border: 0;
+    background: none;
+    padding: 0 2px;
+    color: var(--bs-secondary-color);
+    font-size: 0.85rem;
+    line-height: 1;
+    vertical-align: baseline;
+}
+
+.help-tip:hover,
+.help-tip:focus-visible {
+    color: var(--accent-color);
+}
+
+/* Floating image-upload progress in the post editor */
+.upload-indicator {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    z-index: 1080;
+    width: min(320px, calc(100vw - 32px));
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-family: var(--nav-font);
+    font-size: 0.9rem;
+}
+
+.upload-indicator .spinner-border {
+    color: var(--accent-color);
+}
+
+.upload-indicator .progress {
+    height: 6px;
+}
+
+.upload-indicator .progress-bar {
+    background-color: var(--accent-color);
+    transition: width 0.2s;
+}
+
+/* Thin bar at the top of the page while a form is being sent (layouts/app). */
+.page-loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    width: 0;
+    z-index: 2000;
+    background: var(--accent-color);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.page-loading.active {
+    opacity: 1;
+    width: 85%;
+    transition: width 8s cubic-bezier(0.1, 0.7, 0.2, 1);
+}
+
+.editor-actions {
+    border-top: 1px solid #e9ecef;
+    padding-top: 16px;
 }
 
 .featured-preview {

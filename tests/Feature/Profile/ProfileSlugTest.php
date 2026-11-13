@@ -126,7 +126,7 @@ class ProfileSlugTest extends TestCase
 
         $this->actingAs($user)->get(route('profile.edit'))
             ->assertDontSee('Save link')
-            ->assertSee('You can change your link again on '.now()->addDays(30)->format('j M Y'));
+            ->assertSeeInOrder(['You can change your link again on', now()->addDays(30)->format('j M Y')]);
     }
 
     public function test_user_can_take_back_their_own_old_slug(): void

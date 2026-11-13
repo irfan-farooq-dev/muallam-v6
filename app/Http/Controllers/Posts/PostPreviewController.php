@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Posts;
 
 use App\Enums\PostStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Posts\SavePostRequest;
 use App\Models\Category;
 use App\Models\Post;
 use App\Services\PostBodySanitizer;
@@ -48,7 +49,7 @@ class PostPreviewController extends Controller
     private function previewPublishTime(Request $request): Carbon
     {
         if ($request->boolean('schedule') && $request->filled('scheduled_at')) {
-            return rescue(fn (): Carbon => Carbon::parse($request->input('scheduled_at')), now(), report: false);
+            return rescue(fn (): Carbon => Carbon::parse($request->input('scheduled_at'), SavePostRequest::validTimezone($request->input('timezone')))->setTimezone(config('app.timezone')), now(), report: false);
         }
 
         return now();

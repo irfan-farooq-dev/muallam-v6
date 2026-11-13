@@ -135,7 +135,7 @@ class Notifier
     {
         $post->loadMissing('user');
         $message = $post->isScheduled()
-            ? "{$post->user->name} scheduled “{$post->title}” for {$post->published_at->format('j M Y, g:i a')}"
+            ? "{$post->user->name} scheduled “{$post->title}” to go live later"
             : "{$post->user->name} published “{$post->title}”";
 
         foreach ($this->admins([$actor->getKey()]) as $admin) {

@@ -100,7 +100,7 @@
                                     <span class="badge bg-label-warning">Hidden</span>
                                 @endif
                             </td>
-                            <td class="text-nowrap small"><span title="{{ $comment->created_at->format('j M Y, g:i a') }}">{{ $comment->created_at->diffForHumans() }}</span></td>
+                            <td class="text-nowrap small"><x-local-time :at="$comment->created_at" relative /></td>
                             <td class="text-end text-nowrap">
                                 @unless ($comment->trashed())
                                     <form method="POST" action="{{ route('admin.comments.visibility', $comment) }}" class="d-inline">

@@ -37,7 +37,7 @@
                                         <div @class(['presence-label small mb-1', 'is-online' => $profileUser->isOnline()]) data-presence>{{ $presence }}</div>
                                     @endif
                                     <div class="text-secondary small">
-                                        Member since {{ $profileUser->created_at->format('F Y') }}
+                                        Member since <x-local-time :at="$profileUser->created_at" format="month" />
                                         &middot; <a href="{{ route('users.posts', $profileUser->slug) }}">Posts by {{ $profileUser->name }}</a>
                                     </div>
                                 </div>

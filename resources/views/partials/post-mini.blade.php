@@ -10,7 +10,7 @@
         <span class="post-mini-title d-block">{{ $post->title }}</span>
         <span class="d-block small text-secondary mt-1">
             {{ $post->user->name }} &middot;
-            <time datetime="{{ $post->published_at->toIso8601String() }}">{{ $post->published_at->format('j M Y') }}</time>
+            <x-local-time :at="$post->published_at" format="date" />
         </span>
     </span>
 </a>

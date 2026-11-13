@@ -19,8 +19,8 @@
         <div class="card-body pb-3">
             <h3 class="h5 post-card-title mb-2">{{ $post->title }}</h3>
 
-            @if ($post->summary)
-                <p class="text-secondary mb-0">{{ \Illuminate\Support\Str::limit($post->summary, 160) }}</p>
+            @if ($post->cardSummary(160))
+                <p class="text-secondary mb-0">{{ $post->cardSummary(160) }}</p>
             @endif
         </div>
     </{{ $postUrl ? 'a' : 'div' }}>
@@ -30,7 +30,7 @@
         <x-user-avatar :user="$author" :size="24" />
         <span class="post-card-author-name">{{ $author->name }}</span>
         <span>&middot;</span>
-        <time datetime="{{ $post->published_at->toIso8601String() }}">{{ $post->published_at->format('j M Y') }}</time>
+        <x-local-time :at="$post->published_at" format="date" />
         <span class="ms-auto d-flex gap-3">
             <span title="Likes"><i class="bi bi-hand-thumbs-up me-1"></i>{{ number_format($post->likes_count) }}</span>
             <span title="Comments"><i class="bi bi-chat me-1"></i>{{ number_format($post->comments_count) }}</span>

@@ -11,12 +11,12 @@
                             <span class="featured-slide-category">{{ $slidePost->category->name }}</span>
                         @endif
                         <h3 class="featured-slide-title">{{ $slidePost->title }}</h3>
-                        @if ($slidePost->summary)
-                            <p class="featured-slide-summary d-none d-md-block">{{ \Illuminate\Support\Str::limit($slidePost->summary, 150) }}</p>
+                        @if ($slidePost->cardSummary(150))
+                            <p class="featured-slide-summary d-none d-md-block">{{ $slidePost->cardSummary(150) }}</p>
                         @endif
                         <div class="featured-slide-meta">
                             {{ $slidePost->user->name }} &middot;
-                            <time datetime="{{ $slidePost->published_at->toIso8601String() }}">{{ $slidePost->published_at->format('j M Y') }}</time>
+                            <x-local-time :at="$slidePost->published_at" format="date" />
                         </div>
                     </div>
                 </a>

@@ -7,6 +7,7 @@ use App\Services\PostBodySanitizer;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -84,8 +85,13 @@ class SavePostRequest extends FormRequest
             'publish_option' => ['nullable', 'in:now,schedule'],
             'scheduled_at' => [
                 Rule::requiredIf(fn (): bool => $this->input('status') === PostStatus::Published->value && $this->input('publish_option') === 'schedule'),
-                'nullable', 'date', 'after:now',
+                'nullable', 'date', function (string $attribute, mixed $value, Closure $fail): void {
+                    if ($this->scheduledAt()?->isFuture() === false) {
+                        $fail('The scheduled time must be in the future.');
+                    }
+                },
             ],
+            'timezone' => ['nullable', 'string'],
             'allow_comments' => ['boolean'],
             'featured_image' => [
                 'nullable', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:'.self::IMAGE_MAX_KILOBYTES,
@@ -106,7 +112,6 @@ class SavePostRequest extends FormRequest
             'access_password.min' => 'The post password must be at least '.self::ACCESS_PASSWORD_MIN.' characters.',
             'category_id.exists' => 'Choose one of the listed categories.',
             'scheduled_at.required' => 'Choose when the post should go live.',
-            'scheduled_at.after' => 'The scheduled time must be in the future.',
             'featured_image.image' => 'The featured image must be an image file.',
             'featured_image.mimes' => 'Use a JPG, PNG or WebP image.',
             'featured_image.max' => 'The featured image must be 4 MB or smaller.',
@@ -142,5 +147,32 @@ class SavePostRequest extends FormRequest
     public function wantsSchedule(): bool
     {
         return $this->input('status') === PostStatus::Published->value && $this->input('publish_option') === 'schedule';
+    }
+
+    /**
+     * The writer's time zone, sent by the editor from the browser (e.g. "Asia/Karachi"). Unknown values fall back to UTC.
+     */
+    public function writerTimezone(): string
+    {
+        return self::validTimezone($this->input('timezone'));
+    }
+
+    /**
+     * The chosen go-live time: typed in the writer's own time zone, returned in the app's (UTC) for saving.
+     */
+    public function scheduledAt(): ?Carbon
+    {
+        $value = $this->input('scheduled_at');
+
+        if (! is_string($value) || $value === '') {
+            return null;
+        }
+
+        return rescue(fn (): Carbon => Carbon::parse($value, $this->writerTimezone())->setTimezone(config('app.timezone')), null, report: false);
+    }
+
+    public static function validTimezone(mixed $timezone): string
+    {
+        return is_string($timezone) && in_array($timezone, timezone_identifiers_list(), true) ? $timezone : 'UTC';
     }
 }

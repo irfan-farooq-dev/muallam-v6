@@ -11,7 +11,7 @@
                     @if ($comment->user_id === $post->user_id)
                         <span class="badge text-bg-light">Author</span>
                     @endif
-                    <time class="text-secondary" datetime="{{ $comment->created_at->toIso8601String() }}" title="{{ $comment->created_at->format('j M Y, g:i a') }}">{{ $comment->created_at->diffForHumans() }}</time>
+                    <x-local-time :at="$comment->created_at" relative class="text-secondary" />
                     @unless ($comment->is_approved)
                         <span class="badge text-bg-warning">Hidden</span>
                     @endunless

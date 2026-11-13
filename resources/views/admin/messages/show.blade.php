@@ -9,7 +9,7 @@
 @section('content')
     @php
         $replySubject = 'Re: '.$message->subject->label().' ('.config('app.name').')';
-        $replyBody = "\n\n---\nOn {$message->created_at->format('j M Y, g:i a')} {$message->name} wrote:\n".$message->message;
+        $replyBody = "\n\n---\nOn {$message->created_at->format('j M Y')} {$message->name} wrote:\n".$message->message;
     @endphp
 
     <div class="card">
@@ -26,7 +26,7 @@
                 </div>
                 <div class="text-md-end small text-muted">
                     <span class="badge bg-label-secondary mb-1">{{ $message->subject->label() }}</span>
-                    <div>{{ $message->created_at->format('j M Y, g:i a') }}</div>
+                    <div><x-local-time :at="$message->created_at" /></div>
                 </div>
             </div>
 

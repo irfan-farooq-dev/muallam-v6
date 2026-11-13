@@ -20,9 +20,10 @@
 
 @section('content')
     <section class="member-area">
-        <div class="container">
+        {{-- Full width: the sidebar sits at the left edge and the page uses the rest of the screen. --}}
+        <div class="container-fluid member-container">
             <div class="row g-4">
-                <aside class="col-lg-3">
+                <aside class="col-lg-auto member-sidebar">
                     <nav class="member-nav" aria-label="Member area">
                         <div class="member-nav-user d-none d-lg-flex align-items-center gap-2 mb-3">
                             <x-user-avatar :user="auth()->user()" :size="40" />
@@ -45,7 +46,7 @@
                     </nav>
                 </aside>
 
-                <div class="col-lg-9">
+                <div class="col-lg member-main">
                     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
                         <h2 class="h3 mb-0">@yield('title')</h2>
                         @yield('page_actions')

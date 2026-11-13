@@ -29,6 +29,7 @@
     <script defer src="{{ asset('vendor/alpinejs/alpine.min.js') }}"></script>
 </head>
 <body class="@yield('body_class')">
+    <div class="page-loading" id="page-loading" aria-hidden="true"></div>
 
     @include('partials.header')
     @include('partials.verify-email-banner')
@@ -50,6 +51,20 @@
     <script src="{{ asset('frontend/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ asset('frontend/vendor/aos/aos.js') }}"></script>
     <script src="{{ asset('frontend/js/main.js') }}"></script>
+    <script src="@versionedAsset('js/local-time.js')"></script>
+    <script>
+        // "?" help tips (x-help-tip) and the page-loading bar shown while a form is being sent.
+        document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((element) => bootstrap.Tooltip.getOrCreateInstance(element));
+
+        document.addEventListener('submit', (event) => {
+            const target = event.submitter?.getAttribute('formtarget') || event.target.getAttribute('target');
+            if (!event.defaultPrevented && target !== '_blank') {
+                document.getElementById('page-loading')?.classList.add('active');
+            }
+        });
+        // Coming back with the browser's Back button must not show a stuck bar.
+        window.addEventListener('pageshow', () => document.getElementById('page-loading')?.classList.remove('active'));
+    </script>
     @stack('scripts')
 </body>
 </html>

@@ -78,7 +78,7 @@
                 <div class="card">
                     <div class="card-body small">
                         <div class="d-flex justify-content-between py-1"><span>Posts</span><strong>{{ $category->posts_count }}</strong></div>
-                        <div class="d-flex justify-content-between py-1"><span>Created</span><strong>{{ $category->created_at->format('j M Y') }}</strong></div>
+                        <div class="d-flex justify-content-between py-1"><span>Created</span><strong><x-local-time :at="$category->created_at" format="date" /></strong></div>
                         @if ($category->is_active)
                             <a href="{{ route('categories.show', $category) }}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">View on site</a>
                         @endif

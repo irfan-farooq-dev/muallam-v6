@@ -27,11 +27,18 @@
                 default => 'public',
             }),
             'schedule' => (bool) old('schedule', $isScheduled),
-            'scheduledAt' => old('scheduled_at', $isScheduled ? $post->published_at->format('Y-m-d\TH:i') : ''),
-            'summary' => old('summary', $post->summary ?? ''),
+            // A saved schedule is sent in UTC and shown in the writer's local time by the script; after a failed save, what they typed.
+            'scheduledAt' => old('scheduled_at', ''),
+            'scheduledAtUtc' => $isScheduled ? $post->published_at->toIso8601String() : null,
             'featuredImage' => $post->featuredImageUrl(),
             'isLive' => $isLive,
             'imageUploadUrl' => route('posts.images.store'),
+            // Reopen on the step that has the problem: title or content errors on "Write", any other error on the options.
+            'step' => match (true) {
+                $errors->hasAny(['title', 'body']) => 1,
+                $errors->any() || $errors->sharing->any() => 2,
+                default => 1,
+            },
         ];
     @endphp
 
@@ -69,9 +76,25 @@
         </div>
     @endif
 
+    {{-- Two steps in one form: 1 = write (title and content), 2 = publishing options. Nothing is saved between the steps. --}}
+    <div x-data="postEditor(@js($initial))" data-start-step="{{ $initial['step'] }}">
+    <ol class="editor-steps list-unstyled d-flex flex-wrap gap-2 mb-4" aria-label="Steps">
+        <li>
+            <button type="button" class="editor-step" :class="step === 1 && 'active'" :aria-current="step === 1 ? 'step' : false" @click="step = 1">
+                <span class="editor-step-number">1</span>Write
+            </button>
+        </li>
+        <li class="editor-step-divider" aria-hidden="true"></li>
+        <li>
+            <button type="button" class="editor-step" :class="step === 2 && 'active'" :aria-current="step === 2 ? 'step' : false" @click="goToOptions()">
+                <span class="editor-step-number">2</span>Publishing options
+            </button>
+        </li>
+    </ol>
+
     <form method="POST" enctype="multipart/form-data" novalidate
           action="{{ $post->exists ? route('posts.update', $post) : route('posts.store') }}"
-          x-data="postEditor(@js($initial))" @submit="beforeSubmit($event)">
+          @submit="beforeSubmit($event)">
         @csrf
         @if ($post->exists)
             @method('PUT')
@@ -81,180 +104,216 @@
         <input type="hidden" name="action" x-ref="action" value="publish">
         {{-- Title, summary and content are sent base64-encoded in here, so the host's web firewall does not block normal post text. --}}
         <input type="hidden" name="encoded_fields" x-ref="encoded">
+        {{-- The writer's time zone, so a scheduled time means their local time. --}}
+        <input type="hidden" name="timezone" :value="timezone">
 
-        <div class="row g-4">
-            <div class="col-xl-8">
-                <div class="mb-3">
-                    <label for="title" class="form-label fw-semibold">Title</label>
-                    <input type="text" id="title" name="title" maxlength="200" required
-                           value="{{ old('title', $post->title) }}"
-                           @class(['form-control form-control-lg', 'is-invalid' => $errors->has('title')])
-                           @input="dirty = true">
-                    <div class="field-error">{{ $errors->first('title') }}</div>
-                </div>
-
-                <div class="mb-3">
-                    <label for="summary" class="form-label fw-semibold">Summary <span class="text-secondary fw-normal">(optional, shown on post cards)</span></label>
-                    <textarea id="summary" name="summary" rows="2" maxlength="{{ \App\Http\Requests\Posts\SavePostRequest::SUMMARY_MAX }}"
-                              @class(['form-control', 'is-invalid' => $errors->has('summary')])
-                              x-model="summary" @input="dirty = true"></textarea>
-                    <div class="d-flex justify-content-between">
-                        <div class="field-error">{{ $errors->first('summary') }}</div>
-                        <small class="text-secondary"><span x-text="summary.length"></span> / {{ \App\Http\Requests\Posts\SavePostRequest::SUMMARY_MAX }}</small>
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label fw-semibold" id="body-label">Content</label>
-                    <div @class(['post-editor', 'is-invalid' => $errors->has('body')])>
-                        <div x-ref="editor" aria-labelledby="body-label"></div>
-                    </div>
-                    <input type="hidden" name="body" x-ref="body">
-                    <input type="file" accept="image/jpeg,image/png,image/webp" class="d-none" x-ref="inlineImage" @change="chooseInlineImage($event)">
-                    <div class="small text-secondary mt-1" x-show="uploading > 0" x-cloak>
-                        <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>Uploading image…
-                    </div>
-                    <div class="field-error" x-show="imageError" x-text="imageError" x-cloak></div>
-                    <div class="field-error">{{ $errors->first('body') }}</div>
-                </div>
+        {{-- Step 1: write --}}
+        <div x-show="step === 1" x-cloak data-step="1">
+            <div class="mb-3">
+                <label for="title" class="form-label fw-semibold">Title</label>
+                <input type="text" id="title" name="title" maxlength="200" required
+                       value="{{ old('title', $post->title) }}" x-ref="title"
+                       @class(['form-control form-control-lg', 'is-invalid' => $errors->has('title')])
+                       @input="dirty = true; stepError = ''">
+                <div class="field-error">{{ $errors->first('title') }}</div>
             </div>
 
-            <div class="col-xl-4">
-                <div class="card settings-card mb-3">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h3 class="h6 mb-0">Publishing</h3>
-                            @if ($post->exists)
-                                <x-post-status-badge :post="$post" />
-                            @endif
-                        </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold" id="body-label">Content</label>
+                <div @class(['post-editor', 'is-invalid' => $errors->has('body')])>
+                    <div x-ref="editor" aria-labelledby="body-label"></div>
+                </div>
+                <input type="hidden" name="body" x-ref="body">
+                <input type="file" accept="image/jpeg,image/png,image/webp" class="d-none" x-ref="inlineImage" @change="chooseInlineImage($event)">
+                {{-- Floating, so it is visible wherever the writer has scrolled to. Large photos can take a few seconds on the live host. --}}
+                <div class="upload-indicator shadow" x-show="uploading > 0" x-cloak role="status" aria-live="polite">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                        <span x-text="uploadPercent < 100 ? 'Uploading image… ' + uploadPercent + '%' : 'Processing image…'">Uploading image…</span>
+                    </div>
+                    <div class="progress mt-2" role="presentation">
+                        <div class="progress-bar" :style="`width: ${uploadPercent}%`"></div>
+                    </div>
+                </div>
+                <div class="field-error" x-show="imageError" x-text="imageError" x-cloak></div>
+                <div class="field-error">{{ $errors->first('body') }}</div>
+            </div>
 
-                        <div class="mb-3">
-                            <span class="form-label small text-secondary d-block mb-1">Who can read it once published?</span>
-                            <div class="form-check">
+            <div class="d-flex flex-wrap align-items-center justify-content-end gap-3">
+                <span class="field-error mt-0" x-show="stepError" x-text="stepError" x-cloak></span>
+                <button type="button" class="btn btn-accent btn-lg" @click="goToOptions()" :disabled="uploading > 0">
+                    Next: publishing options<i class="bi bi-arrow-right ms-2"></i>
+                </button>
+            </div>
+        </div>
+
+        {{-- Step 2: publishing options. Short labels; the "?" beside each one explains it. --}}
+        <div x-show="step === 2" x-cloak data-step="2">
+            {{-- The summary field was dropped from the editor; an existing summary is kept as it is. --}}
+            <input type="hidden" name="summary" value="{{ old('summary', $post->summary) }}">
+
+            <div class="card settings-card">
+                <div class="card-body p-4">
+                    <div class="row g-4">
+                        <div class="col-lg-6">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h3 class="h6 mb-0">Who can read it?</h3>
+                                @if ($post->exists)
+                                    <x-post-status-badge :post="$post" />
+                                @endif
+                            </div>
+                            <p class="option-help mb-2">You can change this at any time, also after publishing.</p>
+
+                            <div class="form-check editor-option">
                                 <input class="form-check-input" type="radio" name="visibility" id="visibility_public" value="public" x-model="visibility" @change="dirty = true">
-                                <label class="form-check-label" for="visibility_public">Everyone <span class="text-secondary small">(public)</span></label>
+                                <label class="form-check-label" for="visibility_public">
+                                    Everyone
+                                </label>
                             </div>
-                            <div class="form-check">
+                            <div class="form-check editor-option">
                                 <input class="form-check-input" type="radio" name="visibility" id="visibility_private" value="private" x-model="visibility" @change="dirty = true">
-                                <label class="form-check-label" for="visibility_private">Only me <span class="text-secondary small">(private)</span></label>
+                                <label class="form-check-label" for="visibility_private">Only me</label>
+                                <x-help-tip text="Nobody else can open it. Good for personal notes." />
                             </div>
-                            <div class="form-check">
+                            <div class="form-check editor-option">
                                 <input class="form-check-input" type="radio" name="visibility" id="visibility_restricted" value="restricted" x-model="visibility" @change="dirty = true">
-                                <label class="form-check-label" for="visibility_restricted">Invited people only <span class="text-secondary small">(restricted)</span></label>
+                                <label class="form-check-label" for="visibility_restricted">Invited people only</label>
+                                <x-help-tip text="Only people you invite by email can read it, with a password you choose. Want feedback before everyone can read it? Use this, invite a friend or editor, then switch to Everyone when it is ready." />
                             </div>
+
                             <div class="mt-2" x-show="visibility === 'restricted'" x-cloak>
                                 <label for="access_password" class="form-label small text-secondary mb-1">
                                     Post password {{ $post->access_password ? '(leave empty to keep the current one)' : '' }}
+                                    <x-help-tip text="Invited readers need this. Tell them yourself; it is never put in the invite email." />
                                 </label>
                                 <input type="text" id="access_password" name="access_password" autocomplete="off" maxlength="72"
                                        @class(['form-control form-control-sm', 'is-invalid' => $errors->has('access_password')])
                                        placeholder="{{ $post->access_password ? 'Unchanged' : 'At least '.\App\Http\Requests\Posts\SavePostRequest::ACCESS_PASSWORD_MIN.' characters' }}"
                                        @input="dirty = true">
-                                <small class="text-secondary d-block">Invited readers need this. Tell them yourself; it is never put in the invite email.</small>
                                 <div class="field-error">{{ $errors->first('access_password') }}</div>
                             </div>
                             <div class="field-error">{{ $errors->first('visibility') ?: $errors->first('status') }}</div>
+
+                            <div class="mt-3" x-show="visibility === 'public'">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="schedule" name="schedule" value="1" x-model="schedule" @change="dirty = true">
+                                    <label class="form-check-label" for="schedule">
+                                        Schedule for later
+                                    </label>
+                                </div>
+                                <div x-show="schedule" x-cloak class="mt-2">
+                                    <input type="datetime-local" name="scheduled_at" x-model="scheduledAt" @change="dirty = true"
+                                           @class(['form-control form-control-sm', 'is-invalid' => $errors->has('scheduled_at')])
+                                           aria-label="Go-live date and time">
+                                </div>
+                                <div class="field-error">{{ $errors->first('scheduled_at') }}</div>
+                            </div>
+
+                            <div class="form-check form-switch mt-3">
+                                <input class="form-check-input" type="checkbox" role="switch" id="allow_comments" name="allow_comments" value="1"
+                                       @checked(old('allow_comments', $post->exists ? $post->allow_comments : true)) @change="dirty = true">
+                                <label class="form-check-label" for="allow_comments">Allow comments</label>
+                                <x-help-tip text="Signed-in members can comment under your post. You can hide any comment later." />
+                            </div>
                         </div>
 
-                        <div class="mb-3" x-show="visibility === 'public'">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" role="switch" id="schedule" name="schedule" value="1" x-model="schedule" @change="dirty = true">
-                                <label class="form-check-label" for="schedule">Schedule for later</label>
-                            </div>
-                            <div x-show="schedule" x-cloak class="mt-2">
-                                <input type="datetime-local" name="scheduled_at" x-model="scheduledAt" @change="dirty = true"
-                                       @class(['form-control form-control-sm', 'is-invalid' => $errors->has('scheduled_at')])
-                                       aria-label="Go-live date and time">
-                                <small class="text-secondary">Time zone: {{ config('app.timezone') }}</small>
-                            </div>
-                            <div class="field-error">{{ $errors->first('scheduled_at') }}</div>
-                        </div>
+                        <div class="col-lg-6">
+                            <label for="category_id" class="h6 d-block mb-2">Category</label>
+                            {{-- <p class="option-help mb-2">Choose the category that best fits your post, so readers browsing that topic find it. If none fits, keep General.</p> --}}
+                            <select id="category_id" name="category_id" required @class(['form-select', 'is-invalid' => $errors->has('category_id')]) @change="dirty = true">
+                                @foreach ($categories as $category)
+                                    <option value="{{ $category->id }}" @selected((string) old('category_id', $post->category_id ?? $defaultCategoryId) === (string) $category->id)>{{ $category->name }}</option>
+                                @endforeach
+                            </select>
+                            <div class="field-error">{{ $errors->first('category_id') }}</div>
 
-                        <label for="category_id" class="form-label small text-secondary mb-1">Category</label>
-                        <select id="category_id" name="category_id" required @class(['form-select', 'is-invalid' => $errors->has('category_id')]) @change="dirty = true">
-                            @foreach ($categories as $category)
-                                <option value="{{ $category->id }}" @selected((string) old('category_id', $post->category_id ?? $defaultCategoryId) === (string) $category->id)>{{ $category->name }}</option>
-                            @endforeach
-                        </select>
-                        <div class="field-error">{{ $errors->first('category_id') }}</div>
-
-                        <div class="form-check form-switch mt-3">
-                            <input class="form-check-input" type="checkbox" role="switch" id="allow_comments" name="allow_comments" value="1"
-                                   @checked(old('allow_comments', $post->exists ? $post->allow_comments : true)) @change="dirty = true">
-                            <label class="form-check-label" for="allow_comments">Allow comments</label>
+                            <h3 class="h6 mt-4 mb-0">Featured image <span class="small text-secondary fw-normal">(optional)</span></h3>
+                            <p class="option-help mb-2">The main picture of your post: shown at the top of the post and when the link is shared on social media. JPG, PNG or WebP, up to 4 MB, at least 400×200.</p>
+                            <template x-if="preview && !removeImage">
+                                <img :src="preview" alt="Featured image preview" class="img-fluid rounded mb-2 featured-preview">
+                            </template>
+                            <label class="btn btn-sm btn-outline-accent mb-0">
+                                <i class="bi bi-image me-1"></i><span x-text="preview && !removeImage ? 'Replace image' : 'Choose image'"></span>
+                                <input type="file" name="featured_image" accept="image/jpeg,image/png,image/webp" class="d-none" x-ref="imageInput" @change="chooseImage($event)">
+                            </label>
+                            <button type="button" class="btn btn-sm btn-link text-danger" x-show="preview && !removeImage" @click="clearImage()">Remove</button>
+                            <input type="hidden" name="remove_featured_image" :value="removeImage ? 1 : 0">
+                            <div class="field-error">{{ $errors->first('featured_image') }}</div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="card settings-card mb-3">
-                    <div class="card-body">
-                        <h3 class="h6 mb-1">Featured image</h3>
-                        <p class="small text-secondary">JPG, PNG or WebP, up to 4 MB, at least 400×200.</p>
-
-                        <template x-if="preview && !removeImage">
-                            <img :src="preview" alt="Featured image preview" class="img-fluid rounded mb-2 featured-preview">
-                        </template>
-
-                        <label class="btn btn-sm btn-outline-accent mb-0">
-                            <i class="bi bi-image me-1"></i><span x-text="preview && !removeImage ? 'Replace image' : 'Choose image'"></span>
-                            <input type="file" name="featured_image" accept="image/jpeg,image/png,image/webp" class="d-none" x-ref="imageInput" @change="chooseImage($event)">
-                        </label>
-                        <button type="button" class="btn btn-sm btn-link text-danger" x-show="preview && !removeImage" @click="clearImage()">Remove</button>
-                        <input type="hidden" name="remove_featured_image" :value="removeImage ? 1 : 0">
-                        <div class="field-error">{{ $errors->first('featured_image') }}</div>
-                    </div>
-                </div>
-
-                <div class="d-grid gap-2">
-                    <button type="submit" value="publish" class="btn btn-accent btn-lg" :disabled="submitting || uploading > 0">
-                        <span x-show="submitting === 'publish'" x-cloak class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
-                        <span x-text="publishLabel">Publish</span>
+            <div class="editor-actions mt-4">
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <button type="button" class="btn btn-link text-secondary px-0 me-auto" @click="step = 1; window.scrollTo({ top: 0 })">
+                        <i class="bi bi-arrow-left me-1"></i>Back to writing
+                    </button>
+                    <button type="submit" value="preview" class="btn btn-outline-secondary"
+                            formaction="{{ route('posts.preview') }}" formtarget="_blank" formnovalidate>
+                        <i class="bi bi-eye me-1"></i>Preview
                     </button>
                     <button type="submit" value="draft" class="btn btn-outline-accent" :disabled="submitting || uploading > 0">
                         <span x-show="submitting === 'draft'" x-cloak class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
                         <span x-text="isLive ? 'Unpublish (back to draft)' : 'Save draft'">Save draft</span>
                     </button>
-                    <button type="submit" value="preview" class="btn btn-link"
-                            formaction="{{ route('posts.preview') }}" formtarget="_blank" formnovalidate>
-                        <i class="bi bi-eye me-1"></i>Preview
+                    <button type="submit" value="publish" class="btn btn-accent px-4" :disabled="submitting || uploading > 0">
+                        <span x-show="submitting === 'publish'" x-cloak class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                        <span x-text="publishLabel">Publish</span>
                     </button>
                 </div>
-                <p class="small text-secondary mt-2 mb-0" x-text="publishHint"></p>
+                <p class="small text-secondary mt-2 mb-0 text-end">
+                    <span x-text="publishHint"></span>
+                    <span x-show="!isLive" x-cloak>Drafts are only visible to you.</span>
+                </p>
             </div>
         </div>
     </form>
 
-    @if ($post->exists && $post->status === \App\Enums\PostStatus::Restricted)
-        @include('member.posts.partials.sharing', ['post' => $post, 'shares' => $shares])
-    @endif
+    <div x-show="step === 2" x-cloak>
+        @if ($post->exists && $post->status === \App\Enums\PostStatus::Restricted)
+            @include('member.posts.partials.sharing', ['post' => $post, 'shares' => $shares])
+        @endif
 
-    @if ($post->exists)
-        <form method="POST" action="{{ route('posts.destroy', $post) }}" class="mt-4 text-end"
-              onsubmit="return confirm('Delete this post? This cannot be undone.')">
-            @csrf
-            @method('DELETE')
-            <button type="submit" class="btn btn-link text-danger"><i class="bi bi-trash me-1"></i>Delete post</button>
-        </form>
-    @endif
+        @if ($post->exists)
+            <form method="POST" action="{{ route('posts.destroy', $post) }}" class="mt-4 text-end"
+                  onsubmit="return confirm('Delete this post? This cannot be undone.')">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="btn btn-link text-danger"><i class="bi bi-trash me-1"></i>Delete post</button>
+            </form>
+        @endif
+    </div>
+    </div>
 @endsection
 
 @push('scripts')
     <script src="{{ asset('vendor/quill/quill.js') }}"></script>
     <script>
+        // "2026-11-14T01:12" in the browser's time zone, the format a datetime-local input expects.
+        function toLocalInputValue(date) {
+            const pad = (number) => String(number).padStart(2, '0');
+
+            return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+        }
+
         document.addEventListener('alpine:init', () => {
             Alpine.data('postEditor', (initial) => {
                 // Kept outside Alpine's reactive state: Alpine wraps reactive objects in proxies, which break Quill.
                 let quill = null;
 
                 return {
+                // Sending invites returns to #sharing, which lives on the options step.
+                step: window.location.hash === '#sharing' ? 2 : initial.step,
+                stepError: '',
                 visibility: initial.visibility,
                 schedule: initial.schedule,
-                scheduledAt: initial.scheduledAt,
+                scheduledAt: initial.scheduledAt || (initial.scheduledAtUtc ? toLocalInputValue(new Date(initial.scheduledAtUtc)) : ''),
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
                 isLive: initial.isLive,
                 uploading: 0,
+                uploadPercent: 0,
                 imageError: '',
-                summary: initial.summary,
                 preview: initial.featuredImage,
                 removeImage: false,
                 dirty: false,
@@ -277,7 +336,7 @@
                             // Pasted or dropped image files are uploaded instead of being embedded as huge base64 text.
                             uploader: {
                                 mimetypes: ['image/jpeg', 'image/png', 'image/webp'],
-                                handler: (range, files) => files.forEach((file, offset) => this.uploadImage(file, range.index + offset)),
+                                handler: (range, files) => files.forEach((file, offset) => this.uploadImage(file, range.index + offset, this.$refs.title.value.trim())),
                             },
                         },
                     });
@@ -287,7 +346,10 @@
                     if (initial.body) {
                         quill.clipboard.dangerouslyPasteHTML(initial.body, 'silent');
                     }
-                    quill.on('text-change', () => this.dirty = true);
+                    quill.on('text-change', () => {
+                        this.dirty = true;
+                        this.stepError = '';
+                    });
 
                     window.addEventListener('beforeunload', (event) => {
                         if (this.dirty && !this.submitting) {
@@ -303,12 +365,8 @@
                     if (alt) form.append('alt', alt);
 
                     try {
-                        const response = await fetch(initial.imageUploadUrl, {
-                            method: 'POST',
-                            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content, Accept: 'application/json' },
-                            body: form,
-                        });
-                        const result = await response.json();
+                        const response = await this.sendImage(form);
+                        const result = response.result;
 
                         if (!response.ok) {
                             const errors = result.errors ? Object.values(result.errors).flat() : [result.message];
@@ -327,14 +385,42 @@
                     }
                 },
 
+                // XMLHttpRequest instead of fetch() because only it reports upload progress, shown in the floating indicator.
+                sendImage(form) {
+                    this.uploadPercent = 0;
+
+                    return new Promise((resolve, reject) => {
+                        const request = new XMLHttpRequest();
+                        request.open('POST', initial.imageUploadUrl);
+                        request.setRequestHeader('X-CSRF-TOKEN', document.querySelector('meta[name=csrf-token]').content);
+                        request.setRequestHeader('Accept', 'application/json');
+                        request.upload.onprogress = (event) => {
+                            if (event.lengthComputable) {
+                                this.uploadPercent = Math.round((event.loaded / event.total) * 100);
+                            }
+                        };
+                        request.onload = () => {
+                            let result = {};
+                            try {
+                                result = JSON.parse(request.responseText);
+                            } catch {
+                                result = { message: 'The image could not be uploaded.' };
+                            }
+                            resolve({ ok: request.status >= 200 && request.status < 300, result });
+                        };
+                        request.onerror = () => reject(new Error('Network error'));
+                        request.send(form);
+                    });
+                },
+
                 chooseInlineImage(event) {
                     const file = event.target.files[0];
                     event.target.value = '';
                     if (!file) return;
 
-                    const alt = window.prompt('Briefly describe this image (helps screen readers and search engines). You can leave it empty.', '') ?? '';
+                    // The post title describes the image for screen readers and search engines, so writers are not asked.
                     const range = quill.getSelection(true);
-                    this.uploadImage(file, range ? range.index : quill.getLength(), alt.trim());
+                    this.uploadImage(file, range ? range.index : quill.getLength(), this.$refs.title.value.trim());
                 },
 
                 get publishLabel() {
@@ -363,6 +449,27 @@
                     this.$refs.imageInput.value = '';
                     this.removeImage = true;
                     this.dirty = true;
+                },
+
+                // The server checks everything again; this only stops an obviously empty post from reaching step 2.
+                goToOptions() {
+                    if (this.$refs.title.value.trim() === '') {
+                        this.step = 1;
+                        this.stepError = 'Please add a title first.';
+                        this.$refs.title.focus();
+                        return;
+                    }
+
+                    if (quill.getText().trim() === '' && !quill.root.querySelector('img')) {
+                        this.step = 1;
+                        this.stepError = 'Please write some content first.';
+                        quill.focus();
+                        return;
+                    }
+
+                    this.stepError = '';
+                    this.step = 2;
+                    window.scrollTo({ top: 0 });
                 },
 
                 beforeSubmit(event) {

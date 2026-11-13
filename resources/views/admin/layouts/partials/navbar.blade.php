@@ -7,7 +7,7 @@
 
     <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
         <div class="navbar-nav align-items-center me-auto small text-muted d-none d-md-flex">
-            {{ now()->format('l, j F Y') }}
+            <x-local-time :at="now()" format="weekday-date" />
         </div>
 
         <ul class="navbar-nav flex-row align-items-center ms-auto">

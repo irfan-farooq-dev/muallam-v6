@@ -13,7 +13,7 @@
                     <h2 class="h3 mb-1">{{ $author->name }}</h2>
                     <div class="text-secondary small">
                         {{ trans_choice('{0} No posts yet|{1} 1 post|[2,*] :count posts', $posts->total()) }}
-                        &middot; member since {{ $author->created_at->format('F Y') }}
+                        &middot; member since <x-local-time :at="$author->created_at" format="month" />
                         @if ($author->is_bio_public)
                             &middot; <a href="{{ route('users.bio', $author->slug) }}">About {{ $author->name }}</a>
                         @endif

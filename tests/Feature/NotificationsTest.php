@@ -180,7 +180,7 @@ class NotificationsTest extends TestCase
         ]));
         $messages = array_column($this->dataFor($this->admin, NotificationKind::PostPublished), 'message');
         $this->assertCount(2, $messages);
-        $this->assertNotEmpty(array_filter($messages, fn (string $message): bool => str_starts_with($message, 'Amina Khan scheduled “Later post” for')));
+        $this->assertNotEmpty(array_filter($messages, fn (string $message): bool => $message === 'Amina Khan scheduled “Later post” to go live later'));
     }
 
     public function test_admin_publishing_does_not_notify_themselves(): void

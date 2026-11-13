@@ -60,8 +60,9 @@ return [
     |--------------------------------------------------------------------------
     |
     | Here you may specify the default timezone for your application, which
-    | will be used by the PHP date and date-time functions. The timezone
-    | is set to "UTC" by default as it is suitable for most use cases.
+    | will be used by the PHP date and date-time functions. Times are stored
+    | in UTC; pages show them in each reader's own time zone (x-local-time),
+    | and a scheduled time is read in the writer's browser time zone.
     |
     */
 

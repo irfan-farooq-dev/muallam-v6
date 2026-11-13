@@ -39,7 +39,7 @@
                     <i class="bi bi-eye-slash me-1"></i>
                     <strong>Not public.</strong>
                     @if ($post->isScheduled())
-                        Scheduled to go live on {{ $post->published_at->format('j M Y, g:i a') }}.
+                        Scheduled to go live on <x-local-time :at="$post->published_at" />.
                     @elseif ($post->status === \App\Enums\PostStatus::Restricted)
                         This post is restricted: only people you invite (with the password) can read it.
                     @else

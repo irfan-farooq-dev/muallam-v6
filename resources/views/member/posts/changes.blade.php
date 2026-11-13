@@ -25,7 +25,7 @@
 
     <p class="small text-secondary mb-4">
         <ins class="diff-added">Added words</ins> &middot; <del class="diff-removed">removed words</del>.
-        Compared with {{ $isAuthor ? 'your' : "the author's" }} version from {{ $edit->created_at->format('j M Y, g:i a') }}. Formatting changes (bold, links) are not shown.
+        Compared with {{ $isAuthor ? 'your' : "the author's" }} version from <x-local-time :at="$edit->created_at" />. Formatting changes (bold, links) are not shown.
         @if ($isAuthor)
             Saving the post yourself also marks the changes as reviewed.
         @endif

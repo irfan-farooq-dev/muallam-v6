@@ -81,7 +81,7 @@ class PostEditorTest extends TestCase
         $response = $this->actingAs($user)->post(route('posts.store'), $this->input());
 
         $post = Post::sole();
-        $response->assertRedirect(route('posts.edit', $post))->assertSessionHas('success', 'Post created as a draft.');
+        $response->assertRedirect(route('posts.mine'))->assertSessionHas('success', 'Post created as a draft.');
         $this->assertTrue($post->user->is($user));
         $this->assertSame('my-first-post', $post->slug);
         $this->assertSame(PostStatus::Draft, $post->status);
@@ -167,6 +167,127 @@ class PostEditorTest extends TestCase
             ->assertDontSee('name="action" value="publish" class="btn', false);
     }
 
+    public function test_editor_has_a_write_step_and_a_compact_publishing_options_step(): void
+    {
+        $this->actingAs(User::factory()->create())->get(route('posts.create'))
+            ->assertOk()
+            ->assertSee('data-start-step="1"', false)
+            ->assertSeeInOrder(['data-step="1"', 'Title', 'Content', 'Next: publishing options', 'data-step="2"'], false)
+            ->assertSeeInOrder(['Who can read it?', 'Everyone', 'Only me', 'Invited people only', 'Schedule for later', 'Allow comments', 'Category', 'Featured image'])
+            ->assertSee('data-bs-title="Nobody else can open it. Good for personal notes."', false)
+            ->assertSee('Want feedback before everyone can read it?')
+            ->assertDontSee('id="summary"', false);
+    }
+
+    public function test_scheduled_time_is_read_in_the_writers_own_time_zone_and_saved_in_utc(): void
+    {
+        $this->freezeSecond();
+        $goLiveInKarachi = now('Asia/Karachi')->addHours(2)->startOfMinute();
+
+        $this->actingAs(User::factory()->create())
+            ->post(route('posts.store'), $this->input([
+                'action' => 'publish',
+                'schedule' => '1',
+                'scheduled_at' => $goLiveInKarachi->format('Y-m-d\TH:i'),
+                'timezone' => 'Asia/Karachi',
+            ]))
+            ->assertSessionHas('success', 'Post created. It will go live on '.$goLiveInKarachi->format('j M Y, g:i a').'.');
+
+        $this->assertTrue(Post::sole()->published_at->equalTo($goLiveInKarachi));
+        $this->assertSame('UTC', Post::sole()->published_at->timezoneName);
+    }
+
+    public function test_a_time_already_past_in_the_writers_time_zone_is_rejected(): void
+    {
+        // One hour ago in Karachi would be four hours ahead if it were read as UTC.
+        $this->actingAs(User::factory()->create())
+            ->post(route('posts.store'), $this->input([
+                'action' => 'publish',
+                'schedule' => '1',
+                'scheduled_at' => now('Asia/Karachi')->subHour()->format('Y-m-d\TH:i'),
+                'timezone' => 'Asia/Karachi',
+            ]))
+            ->assertSessionHasErrors(['scheduled_at' => 'The scheduled time must be in the future.']);
+
+        $this->assertDatabaseCount('posts', 0);
+    }
+
+    public function test_an_unknown_time_zone_is_treated_as_utc(): void
+    {
+        $goLive = now()->addDay()->startOfMinute();
+
+        $this->actingAs(User::factory()->create())->post(route('posts.store'), $this->input([
+            'action' => 'publish', 'schedule' => '1', 'scheduled_at' => $goLive->format('Y-m-d\TH:i'), 'timezone' => 'Mars/Olympus',
+        ]));
+
+        $this->assertTrue(Post::sole()->published_at->equalTo($goLive));
+    }
+
+    public function test_editing_a_scheduled_post_sends_its_time_in_utc_for_the_browser_to_convert(): void
+    {
+        $user = User::factory()->create();
+        $post = Post::factory()->for($user)->scheduled()->create();
+
+        $this->actingAs($user)->get(route('posts.edit', $post))
+            ->assertSee(str_replace('/', '\/', json_encode($post->published_at->toIso8601String())), false)
+            ->assertSee('name="timezone"', false);
+    }
+
+    public function test_saving_returns_to_my_posts_but_a_restricted_post_opens_its_invites(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->post(route('posts.store'), $this->input(['action' => 'publish']))
+            ->assertRedirect(route('posts.mine'))
+            ->assertSessionHas('success', 'Post created and published.');
+
+        $this->actingAs($user)->post(route('posts.store'), $this->input(['title' => 'Secret', 'action' => 'publish', 'visibility' => 'restricted', 'access_password' => 'secret123']))
+            ->assertRedirect(route('posts.edit', 'secret').'#sharing');
+    }
+
+    public function test_admin_editing_someone_elses_post_returns_to_the_admin_post_list(): void
+    {
+        $post = Post::factory()->create();
+
+        $this->actingAs(User::factory()->admin()->create())->put(route('posts.update', $post), $this->input())
+            ->assertRedirect(route('admin.posts.index'));
+    }
+
+    public function test_an_existing_summary_is_kept_when_editing(): void
+    {
+        $user = User::factory()->create();
+        $post = Post::factory()->for($user)->create(['summary' => 'Written before the field was removed.']);
+
+        $this->actingAs($user)->get(route('posts.edit', $post))
+            ->assertSee('<input type="hidden" name="summary" value="Written before the field was removed.">', false);
+    }
+
+    /**
+     * @return array<string, array{array<string, mixed>, int}>
+     */
+    public static function failedFieldStep(): array
+    {
+        return [
+            'missing title reopens on Write' => [['title' => ''], 1],
+            'missing content reopens on Write' => [['body' => ''], 1],
+            'summary too long reopens on the options' => [['summary' => str_repeat('a', 501)], 2],
+            'missing category reopens on the options' => [['category_id' => ''], 2],
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $overrides
+     */
+    #[DataProvider('failedFieldStep')]
+    public function test_editor_reopens_on_the_step_with_the_error(array $overrides, int $step): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->from(route('posts.create'))->post(route('posts.store'), $this->input($overrides));
+
+        $this->actingAs($user)->get(route('posts.create'))->assertSee('data-start-step="'.$step.'"', false);
+    }
+
     public function test_errors_without_a_field_of_their_own_are_listed_at_the_top(): void
     {
         $user = User::factory()->create();
@@ -247,7 +368,7 @@ class PostEditorTest extends TestCase
         $this->actingAs($user)->get(route('posts.edit', $post))->assertOk()->assertSee('Edit post')->assertSee('Old title');
 
         $this->actingAs($user)->put(route('posts.update', $post), $this->input(['title' => 'New title']))
-            ->assertRedirect(route('posts.edit', 'old-title'))
+            ->assertRedirect(route('posts.mine'))
             ->assertSessionHas('success', 'Post saved as a draft.');
 
         $post->refresh();

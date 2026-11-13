@@ -98,7 +98,7 @@
                     <h5 class="mb-0">{{ $user->name }}</h5>
                     <div class="small text-muted mb-3">{{ $user->email }}</div>
                     <ul class="list-unstyled text-start small mb-3">
-                        <li class="d-flex justify-content-between py-1"><span>Joined</span><strong>{{ $user->created_at->format('j M Y') }}</strong></li>
+                        <li class="d-flex justify-content-between py-1"><span>Joined</span><strong><x-local-time :at="$user->created_at" format="date" /></strong></li>
                         <li class="d-flex justify-content-between py-1"><span>Posts</span><strong>{{ $user->posts_count }}</strong></li>
                         <li class="d-flex justify-content-between py-1"><span>Comments</span><strong>{{ $user->comments_count }}</strong></li>
                         <li class="d-flex justify-content-between py-1"><span>Likes given</span><strong>{{ $user->likes_count }}</strong></li>

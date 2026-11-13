@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 #[Fillable([
     'category_id',
@@ -146,6 +147,16 @@ class Post extends Model
     public function featuredImageUrl(): ?string
     {
         return $this->featured_image ? Storage::disk('public')->url($this->featured_image) : null;
+    }
+
+    /**
+     * Text for post cards: the summary if the writer has one (older posts), otherwise the start of the post.
+     */
+    public function cardSummary(int $limit = 160): ?string
+    {
+        $text = $this->summary ?: Str::squish(html_entity_decode(strip_tags((string) preg_replace('#</(p|h[1-6]|li|blockquote|pre)>#i', '$0 ', (string) $this->body)), ENT_QUOTES | ENT_HTML5));
+
+        return $text === '' ? null : Str::limit($text, $limit);
     }
 
     public function isScheduled(): bool
