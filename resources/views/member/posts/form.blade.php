@@ -323,6 +323,8 @@
                     quill = new Quill(this.$refs.editor, {
                         theme: 'snow',
                         placeholder: 'Write your post…',
+                        // Only what the toolbar offers. Text pasted from other sites keeps its words but drops colours, fonts and sizes.
+                        formats: ['header', 'bold', 'italic', 'underline', 'strike', 'blockquote', 'code-block', 'code', 'list', 'indent', 'align', 'link', 'image', 'alt', 'width', 'height'],
                         modules: {
                             toolbar: [
                                 [{ header: [2, 3, false] }],

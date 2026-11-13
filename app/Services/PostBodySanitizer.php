@@ -46,6 +46,34 @@ class PostBodySanitizer
             ->allowMediaHosts([parse_url((string) config('app.url'), PHP_URL_HOST)])
             ->allowRelativeMedias()
             ->forceAttribute('a', 'rel', 'noopener noreferrer nofollow ugc')
+            // Text pasted from other sites or apps often comes wrapped in tags such as <span style="color: …">.
+            // Unknown tags are removed together with their text, so these harmless wrappers are unwrapped
+            // instead: the tag goes, the words stay. Scripts, styles, iframes and other unknown tags are still removed whole.
+            ->blockElement('span')
+            ->blockElement('font')
+            ->blockElement('div')
+            ->blockElement('section')
+            ->blockElement('article')
+            ->blockElement('header')
+            ->blockElement('footer')
+            ->blockElement('main')
+            ->blockElement('mark')
+            ->blockElement('small')
+            ->blockElement('big')
+            ->blockElement('abbr')
+            ->blockElement('cite')
+            ->blockElement('q')
+            ->blockElement('kbd')
+            ->blockElement('samp')
+            ->blockElement('var')
+            ->blockElement('time')
+            ->blockElement('label')
+            ->blockElement('ins')
+            ->blockElement('del')
+            ->blockElement('dfn')
+            ->blockElement('bdi')
+            ->blockElement('bdo')
+            ->blockElement('center')
             ->withMaxInputLength(500_000);
 
         $this->sanitizer = new HtmlSanitizer($config);
