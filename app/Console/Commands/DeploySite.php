@@ -10,6 +10,7 @@ use Illuminate\Console\Command;
 /**
  * Finishes installing an uploaded release on hosting without a terminal. The scheduler runs it every minute;
  * it only does work when the RELEASE file (written by site:package) differs from the last finished deploy.
+ * A new release first clears the cached settings, so the steps (one minute later) always use the current .env.
  */
 #[Signature('site:deploy {--force : Run even if this release was already deployed}')]
 #[Description('Apply a newly uploaded release: migrate, seed categories, import old members, link storage, cache')]
@@ -26,6 +27,15 @@ class DeploySite extends Command
         }
 
         if (! $this->option('force') && $this->lastDeployedRelease() === $release) {
+            return self::SUCCESS;
+        }
+
+        // Settings cached by the previous deploy would hide .env changes (a new database, the import switch) from
+        // every step below. Clear them and deploy on the next run, which reads .env afresh.
+        if ($this->laravel->configurationIsCached()) {
+            $this->info('['.now()->toDateTimeString()."] New release {$release}: cleared cached settings, deploying on the next run");
+            $this->call('optimize:clear');
+
             return self::SUCCESS;
         }
 
