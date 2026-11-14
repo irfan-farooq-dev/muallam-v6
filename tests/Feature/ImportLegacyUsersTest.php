@@ -74,6 +74,7 @@ class ImportLegacyUsersTest extends TestCase
         $this->assertSame('aleeza-owais', $user->slug);
         $this->assertSame('aleeza@example.com', $user->email);
         $this->assertSame(UserRole::Author, $user->role);
+        $this->assertTrue($user->refresh()->is_bio_public);
         $this->assertSame(Gender::Female, $user->gender);
         $this->assertSame('03001234567', $user->phone);
         $this->assertTrue($user->is_active);

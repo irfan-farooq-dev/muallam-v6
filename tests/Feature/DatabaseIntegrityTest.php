@@ -19,7 +19,7 @@ class DatabaseIntegrityTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_new_user_defaults_to_author_with_private_bio(): void
+    public function test_new_user_defaults_to_author_with_public_bio(): void
     {
         $user = User::forceCreate([
             'name' => 'Irfan Farooq',
@@ -30,7 +30,7 @@ class DatabaseIntegrityTest extends TestCase
 
         $this->assertSame(UserRole::Author, $user->role);
         $this->assertFalse($user->isAdmin());
-        $this->assertFalse($user->is_bio_public);
+        $this->assertTrue($user->is_bio_public);
         $this->assertTrue($user->is_active);
     }
 

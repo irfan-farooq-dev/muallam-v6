@@ -19,7 +19,7 @@ Conventions
 | password | varchar(255) | hashed |
 | role | varchar(20), default `author` | `admin`, `author` |
 | bio | text, null | |
-| is_bio_public | boolean, default false | enables `/users/{slug}/bio` |
+| is_bio_public | boolean, default true | enables `/users/{slug}/bio`; members can hide it in Profile |
 | avatar | varchar(255), null | path on the public disk |
 | slug_changed_at | timestamp, null | one change per 30 days |
 | is_active | boolean, default true | admin can block a user |

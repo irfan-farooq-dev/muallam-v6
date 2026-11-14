@@ -58,6 +58,7 @@ class RegistrationTest extends TestCase
         $this->assertSame('irfan-farooq', $user->slug);
         $this->assertSame(UserRole::Author, $user->refresh()->role);
         $this->assertTrue($user->is_active);
+        $this->assertTrue($user->is_bio_public);
         $this->assertNull($user->email_verified_at);
         $this->assertTrue(Hash::check('secret-pass-1', $user->password));
         Event::assertDispatched(Registered::class, fn (Registered $event) => $event->user->is($user));
