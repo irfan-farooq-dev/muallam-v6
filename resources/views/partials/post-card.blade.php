@@ -32,6 +32,7 @@
         <span>&middot;</span>
         <x-local-time :at="$post->published_at" format="date" />
         <span class="ms-auto d-flex gap-3">
+            <span title="Views"><i class="bi bi-eye me-1"></i>{{ number_format((int) $post->views_count) }}</span>
             <span title="Likes"><i class="bi bi-hand-thumbs-up me-1"></i>{{ number_format($post->likes_count) }}</span>
             <span title="Comments"><i class="bi bi-chat me-1"></i>{{ number_format($post->comments_count) }}</span>
         </span>

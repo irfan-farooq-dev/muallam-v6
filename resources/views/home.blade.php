@@ -35,7 +35,7 @@
 @section('content')
     @if ($posts->onFirstPage())
         <section class="section home-hero light-background">
-            <div class="container text-center">
+            <div class="container-fluid site-container text-center">
                 <h2 class="display-5 fw-semibold mb-3">Learn something new today</h2>
                 <p class="lead text-secondary mb-4 mx-auto home-hero-lead">
                     Muallam is a place to read and write clear, practical articles on the topics you care about.
@@ -54,7 +54,7 @@
     @endif
 
     <section class="section">
-        <div class="container">
+        <div class="container-fluid site-container">
             <div class="row g-4">
                 <div class="col-lg-9">
                     @if ($featured->isNotEmpty())

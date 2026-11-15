@@ -35,7 +35,7 @@
     @include('partials.verify-email-banner')
 
     <main class="main">
-        <div class="container">
+        <div class="container-fluid site-container">
             <x-flash />
         </div>
 

@@ -30,6 +30,15 @@ class HomeAndSearchTest extends TestCase
             ->assertDontSee('Future post');
     }
 
+    public function test_post_cards_show_views_likes_and_comments(): void
+    {
+        Post::factory()->published()->create(['title' => 'Counted post', 'views_count' => 1234]);
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSeeInOrder(['Counted post', 'title="Views"', '1,234', 'title="Likes"', 'title="Comments"'], false);
+    }
+
     public function test_post_page_sidebar_highlights_the_posts_category_instead_of_a_label_above_the_title(): void
     {
         $science = Category::factory()->create(['name' => 'Science', 'slug' => 'science']);

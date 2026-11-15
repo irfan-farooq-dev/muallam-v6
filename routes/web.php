@@ -36,7 +36,9 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SeoController;
 use App\Http\Controllers\UserBioController;
 use App\Http\Middleware\DecodeEncodedFormFields;
+use App\Models\Category;
 use App\Models\Post;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
@@ -49,7 +51,11 @@ Route::view('terms-and-conditions', 'pages.terms')->name('terms');
 Route::get('sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
 Route::get('robots.txt', [SeoController::class, 'robots'])->name('robots');
 Route::get('categories', [CategoryController::class, 'index'])->name('categories.index');
-Route::get('category/{category}', [CategoryController::class, 'show'])->name('categories.show');
+Route::get('category/{category}', [CategoryController::class, 'show'])->name('categories.show')
+    // Addresses of categories merged away in Nov 2026 lead to the category they became part of.
+    ->missing(fn (Request $request) => isset(Category::MERGED_SLUGS[$request->route('category')])
+        ? redirect()->route('categories.show', Category::MERGED_SLUGS[$request->route('category')], 301)
+        : abort(404));
 Route::get('users/{slug}/bio', [UserBioController::class, 'show'])->name('users.bio');
 Route::get('users/{slug}/posts', [UserBioController::class, 'posts'])->name('users.posts');
 

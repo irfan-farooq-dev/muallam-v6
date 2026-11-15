@@ -1,5 +1,5 @@
 <header id="header" class="header d-flex align-items-center sticky-top">
-    <div class="container position-relative d-flex align-items-center justify-content-between">
+    <div class="container-fluid site-container position-relative d-flex align-items-center justify-content-between">
 
         <a href="{{ route('home') }}" class="logo d-flex align-items-center me-auto me-xl-0">
             <h1 class="sitename">{{ config('app.name') }}</h1>

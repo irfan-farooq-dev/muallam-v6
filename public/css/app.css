@@ -302,6 +302,19 @@ a:hover {
     font-size: 0.9rem;
 }
 
+/* Full-width pages (header, home): content runs to the screen edges, with a comfortable gutter. */
+.site-container {
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+@media (min-width: 992px) {
+    .site-container {
+        padding-left: 32px;
+        padding-right: 32px;
+    }
+}
+
 /* Member area */
 .member-area {
     padding: 32px 0 64px;

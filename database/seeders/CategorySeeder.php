@@ -23,16 +23,11 @@ class CategorySeeder extends Seeder
     public const CATEGORIES = [
         ['name' => 'Religion & Philosophy', 'description' => null],
         ['name' => 'Politics & Society', 'description' => null],
-        ['name' => 'Art & Creativity', 'description' => null],
-        ['name' => 'Sports', 'description' => null],
-        ['name' => 'Entertainment', 'description' => null],
-        ['name' => 'Travel & Culture', 'description' => null],
-        ['name' => 'Lifestyle', 'description' => null],
-        ['name' => 'Education', 'description' => null],
+        ['name' => 'Culture, Art & Travel', 'description' => null],
+        ['name' => 'Entertainment & Sports', 'description' => null],
+        ['name' => 'Health & Lifestyle', 'description' => null],
         ['name' => 'Business & Finance', 'description' => null],
-        ['name' => 'Health & Wellness', 'description' => null],
-        ['name' => 'Science', 'description' => null],
-        ['name' => 'Technology', 'description' => null],
+        ['name' => 'Science & Technology', 'description' => null],
         ['name' => 'General', 'description' => 'Posts that do not fit another category.'],
     ];
 

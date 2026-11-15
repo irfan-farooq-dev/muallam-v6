@@ -20,6 +20,23 @@ class Category extends Model
     public const NAVIGATION_CACHE_KEY = 'categories.navigation';
 
     /**
+     * Old category slug => the category it was merged into (Nov 2026, twelve categories into eight).
+     *
+     * @var array<string, string>
+     */
+    public const MERGED_SLUGS = [
+        'science' => 'science-technology',
+        'technology' => 'science-technology',
+        'health-wellness' => 'health-lifestyle',
+        'lifestyle' => 'health-lifestyle',
+        'travel-culture' => 'culture-art-travel',
+        'art-creativity' => 'culture-art-travel',
+        'entertainment' => 'entertainment-sports',
+        'sports' => 'entertainment-sports',
+        'education' => 'general',
+    ];
+
+    /**
      * Any change to a category refreshes the cached header menu.
      */
     protected static function booted(): void
