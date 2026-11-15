@@ -120,7 +120,7 @@ class PublicPostPageTest extends TestCase
             ->assertSee('More in Science')
             ->assertSee('Same category post')
             ->assertSee('More from Irfan Farooq')
-            ->assertSee('Same author post')
+            ->assertSeeInOrder(['<ol class="more-from-list mb-0">', 'Same author post', '</ol>'], false)
             ->assertDontSee('Hidden draft');
     }
 

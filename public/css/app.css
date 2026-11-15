@@ -302,7 +302,7 @@ a:hover {
     font-size: 0.9rem;
 }
 
-/* Full-width pages (header, home): content runs to the screen edges, with a comfortable gutter. */
+/* Every public and member page: full width with the same roomy side margins, so all pages line up with the header. */
 .site-container {
     padding-left: 16px;
     padding-right: 16px;
@@ -310,9 +310,40 @@ a:hover {
 
 @media (min-width: 992px) {
     .site-container {
-        padding-left: 32px;
-        padding-right: 32px;
+        padding-left: 48px;
+        padding-right: 48px;
     }
+
+    /* Space between the main column and the category list (home and post pages). */
+    .page-sidebar {
+        padding-left: 2rem;
+    }
+}
+
+@media (min-width: 1400px) {
+    .site-container {
+        padding-left: 80px;
+        padding-right: 80px;
+    }
+
+    .page-sidebar {
+        padding-left: 3rem;
+    }
+}
+
+/* "More from <author>": numbered so the number of posts is clear. */
+.more-from-list {
+    padding-left: 1.5rem;
+}
+
+.more-from-list li {
+    padding-left: 4px;
+    margin-bottom: 6px;
+}
+
+.more-from-list li::marker {
+    color: var(--bs-secondary-color);
+    font-weight: 600;
 }
 
 /* Member area */
@@ -320,17 +351,8 @@ a:hover {
     padding: 32px 0 64px;
 }
 
-.member-container {
-    padding-left: 24px;
-    padding-right: 24px;
-}
-
 /* Fixed-width sidebar on large screens; the content column takes the rest (min-width lets wide tables and the editor shrink). */
 @media (min-width: 992px) {
-    .member-container {
-        padding-left: 32px;
-        padding-right: 48px;
-    }
 
     .member-sidebar {
         width: 240px;

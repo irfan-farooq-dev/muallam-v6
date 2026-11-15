@@ -55,8 +55,8 @@
 
     <section class="section">
         <div class="container-fluid site-container">
-            <div class="row g-4">
-                <div class="col-lg-9">
+            <div class="row g-4 gx-lg-5">
+                <div class="col-lg-8 col-xxl-9">
                     @if ($featured->isNotEmpty())
                         @include('partials.featured-slider', ['featured' => $featured])
                     @endif
@@ -87,7 +87,7 @@
                     @endforeach
                 </div>
 
-                <div class="col-lg-3">
+                <div class="col-lg-4 col-xxl-3 page-sidebar">
                     @include('partials.category-sidebar')
                 </div>
             </div>

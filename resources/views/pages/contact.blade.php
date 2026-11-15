@@ -5,7 +5,7 @@
 
 @section('content')
     <section class="section">
-        <div class="container">
+        <div class="container-fluid site-container">
             <x-breadcrumbs class="mb-2" :items="[['Contact us']]" />
             <h2 class="h3 mb-1">Contact us</h2>
             <p class="text-secondary mb-4">Feedback, a suggestion, a problem with the site or a business question? Send us a message.</p>

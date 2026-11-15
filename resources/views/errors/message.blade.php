@@ -1,6 +1,6 @@
 {{-- Shared body for error pages: @include('errors.message', ['code' => ..., 'heading' => ..., 'text' => ...]) --}}
 <section class="error-page">
-    <div class="container text-center">
+    <div class="container-fluid site-container text-center">
         <div class="error-code mb-3">{{ $code }}</div>
         <h2 class="mb-3">{{ $heading }}</h2>
         <p class="lead text-secondary mb-4">{{ $text }}</p>

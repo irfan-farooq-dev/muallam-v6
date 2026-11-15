@@ -5,6 +5,10 @@
 
 @php
     $email = config('muallam.contact_email');
+    // The view-log wording follows the admin switch (Admin > Views). Views logged before it was turned off are
+    // still kept for up to 12 months, so the retention line stays while any exist.
+    $isLoggingViews = \App\Models\Setting::enabled(\App\Models\Setting::LOG_VIEW_COUNTRIES);
+    $hasViewLog = $isLoggingViews || \App\Models\PostView::query()->exists();
     $sections = [
         'who' => 'Who we are',
         'collect' => 'Information we collect',
@@ -23,13 +27,13 @@
 
 @section('content')
     <section class="section">
-        <div class="container">
+        <div class="container-fluid site-container">
             <div class="row justify-content-center">
                 <div class="col-lg-9">
                     <x-breadcrumbs class="mb-2" :items="[['Privacy policy']]" />
                     <article class="legal-page">
                         <h2 class="h3 mb-1">Privacy policy</h2>
-                        <p class="text-secondary small">Last updated: 9 November 2026</p>
+                        <p class="text-secondary small">Last updated: 15 November 2026</p>
 
                         <p>This policy explains what personal information {{ config('app.name') }} collects when you read, write or get in touch, why we need it, and the choices you have. We keep it to what the site needs to work.</p>
 
@@ -50,7 +54,16 @@
                         <p><strong>When you fill in your profile (optional):</strong> phone number, gender, a short bio, a profile photo and your profile address (for example <code>/users/your-name</code>).</p>
                         <p><strong>When you use the site:</strong> the posts, images, comments and likes you add. If you share a restricted post, we store the email addresses you invite so they can be sent an access link.</p>
                         <p><strong>When you contact us:</strong> your name, email address, the subject and your message, plus the IP address it was sent from (to block abuse).</p>
-                        <p><strong>Automatically:</strong> your IP address and browser details are used briefly to keep the site secure, for example to slow down repeated failed sign-ins. We count how many times a post is read, once per visit, without recording who read it. While you are signed in, we note when you were last active (updated about once a minute).</p>
+                        <p><strong>Automatically:</strong> your IP address and browser details are used briefly to keep the site secure, for example to slow down repeated failed sign-ins. We count how many times a post is read, once per visit.
+                            @if ($isLoggingViews)
+                                Each counted read is also saved with the reader's country (and, if you are signed in, your account) so we can see where our readers are. To find the country, your IP address is sent to a lookup service (country.is); the address itself is never stored.
+                            @else
+                                We do not record who read it or where from.
+                                @if ($hasViewLog)
+                                    Reads saved earlier with the reader's country are kept as described under "How long we keep it".
+                                @endif
+                            @endif
+                            While you are signed in, we note when you were last active (updated about once a minute).</p>
 
                         <h3 id="use">3. How we use it</h3>
                         <ul>
@@ -76,13 +89,16 @@
                         <p>If we ever add advertising, we will update this policy before it starts.</p>
 
                         <h3 id="sharing">6. When we share information</h3>
-                        <p>We do not sell or rent your personal information. We share it only with the companies that help us run the site, such as our web hosting and email provider, who handle it on our behalf, and when the law requires us to.</p>
+                        <p>We do not sell or rent your personal information. We share it only with the companies that help us run the site, such as our web hosting and email provider, who handle it on our behalf, and when the law requires us to.@if ($isLoggingViews) To find the country of each post read, readers' IP addresses are sent to the lookup service country.is, which only returns the country.@endif</p>
 
                         <h3 id="retention">7. How long we keep it</h3>
                         <ul>
                             <li>Account and profile details: for as long as your account exists.</li>
                             <li>Posts, comments and likes: until you or an admin delete them, or your account is deleted.</li>
                             <li>Read notifications: deleted automatically after 90 days.</li>
+                            @if ($hasViewLog)
+                                <li>The view log (post, country, time): deleted automatically after 12 months.</li>
+                            @endif
                             <li>Images uploaded in the editor but never saved in a post: deleted after 24 hours.</li>
                             <li>Contact messages: kept while we deal with them, then deleted.</li>
                         </ul>

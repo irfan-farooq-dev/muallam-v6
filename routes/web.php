@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\CommentController as AdminCommentController;
 use App\Http\Controllers\Admin\ContactMessageController as AdminContactMessageController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\PostController as AdminPostController;
+use App\Http\Controllers\Admin\PostViewController as AdminPostViewController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Auth\LoginController;
@@ -164,6 +165,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', 'admin']
     Route::get('messages/{message}', [AdminContactMessageController::class, 'show'])->name('messages.show');
     Route::post('messages/{message}/unread', [AdminContactMessageController::class, 'markUnread'])->name('messages.unread');
     Route::delete('messages/{message}', [AdminContactMessageController::class, 'destroy'])->name('messages.destroy');
+    Route::get('views', [AdminPostViewController::class, 'index'])->name('views.index');
+    Route::put('views/settings', [AdminPostViewController::class, 'update'])->name('views.settings');
     Route::get('comments', [AdminCommentController::class, 'index'])->name('comments.index');
     Route::post('comments/bulk', [AdminCommentController::class, 'bulk'])->name('comments.bulk');
     Route::patch('comments/{comment}/visibility', [AdminCommentController::class, 'visibility'])->name('comments.visibility');

@@ -21,7 +21,7 @@
 @section('content')
     <section class="member-area">
         {{-- Full width: the sidebar sits at the left edge and the page uses the rest of the screen. --}}
-        <div class="container-fluid member-container">
+        <div class="container-fluid site-container">
             <div class="row g-4">
                 <aside class="col-lg-auto member-sidebar">
                     <nav class="member-nav" aria-label="Member area">

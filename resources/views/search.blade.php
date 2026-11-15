@@ -6,7 +6,7 @@
 
 @section('content')
     <section class="section">
-        <div class="container">
+        <div class="container-fluid site-container">
             <x-breadcrumbs class="mb-2" :items="[['Search']]" />
             <h2 class="h3 mb-3">Search</h2>
 

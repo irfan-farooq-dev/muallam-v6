@@ -1,5 +1,5 @@
 <footer id="footer" class="footer">
-    <div class="container footer-top">
+    <div class="container-fluid site-container footer-top">
         <div class="row gy-4">
             <div class="col-lg-5 col-md-12 footer-about">
                 <a href="{{ route('home') }}" class="logo d-flex align-items-center">
@@ -34,7 +34,7 @@
         </div>
     </div>
 
-    <div class="container copyright text-center mt-4">
+    <div class="container-fluid site-container copyright text-center mt-4">
         <p class="mb-0">&copy; {{ now()->year }} <strong class="px-1 sitename">{{ config('app.name') }}</strong> All rights reserved.</p>
     </div>
 </footer>

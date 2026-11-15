@@ -199,13 +199,37 @@ Laravel's standard database notifications table (`php artisan make:notifications
 
 Rules: nobody is notified of their own actions. Likes and admin edits on the same post update the existing unread notification ("Ali and 2 others liked…"). Deleting a user deletes their notifications; `notifications:prune` (daily) deletes ones read more than 90 days ago.
 
+## post_views
+
+The view log behind Admin > Views. One row per counted post view (same rule as `posts.views_count`: once per visitor session, never the author), written only while the `log_view_countries` setting is on. Bots are skipped. The country comes from a free IP lookup (config `muallam.country_lookup_url`, cached 30 days per hashed IP) after the page is sent; the IP itself is never stored.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | bigint PK | |
+| post_id | FK posts, cascade on delete | |
+| user_id | FK users, null, null on delete | the reader, when signed in |
+| country_code | char(2), null | ISO code, e.g. `PK`; null = unknown or local address |
+| viewed_at | timestamp | indexed; also (`post_id`, `viewed_at`) |
+
+`views:prune` (daily) deletes rows older than 365 days.
+
+## settings
+
+Site-wide switches admins change in the admin panel, read through `Setting::get()` / `Setting::enabled()` (cached, defaults in `Setting::DEFAULTS`).
+
+| Column | Type | Notes |
+|---|---|---|
+| id | bigint PK | |
+| key | varchar(100), unique | e.g. `log_view_countries` |
+| value | text, null | `'1'` / `'0'` for switches |
+| created_at, updated_at | timestamps | |
+
 ## Laravel default tables
 
 `password_reset_tokens`, `sessions`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`.
 
 ## Deferred
 
-- `post_views` log (per-view rows, like the old `blog_views`)
 - `personal_access_tokens` (Sanctum) and `users.fcm_token` for the mobile app
 - `notifications`
 - Serving images of private/restricted posts through a permission-checking controller (for now they use unguessable names on the public disk)
@@ -222,4 +246,5 @@ comments 1─* comments (replies via parent_id)
 posts 1─* post_shares
 posts 1─* post_images *─1 users (uploader)
 posts 1─* post_admin_edits *─1 users (editor)
+posts 1─* post_views *─1 users (reader, optional)
 ```

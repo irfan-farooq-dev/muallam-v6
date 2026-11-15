@@ -27,14 +27,14 @@
 @section('content')
     @if ($isInvitedReader)
         <div class="preview-banner">
-            <div class="container py-2">
+            <div class="container-fluid site-container py-2">
                 <i class="bi bi-shield-lock me-1"></i>
                 <strong>Shared with you privately</strong> by {{ $post->user->name }}. Please don't pass on the link or the password.
             </div>
         </div>
     @elseif (! $isPublic)
         <div class="preview-banner">
-            <div class="container d-flex flex-wrap align-items-center justify-content-between gap-2 py-2">
+            <div class="container-fluid site-container d-flex flex-wrap align-items-center justify-content-between gap-2 py-2">
                 <span>
                     <i class="bi bi-eye-slash me-1"></i>
                     <strong>Not public.</strong>
@@ -58,7 +58,7 @@
     @auth
         @if (auth()->user()->can('reviewAdminEdits', $post) && $post->pendingAdminEdit()->exists())
             <div class="preview-banner" data-admin-edit-notice>
-                <div class="container d-flex flex-wrap align-items-center justify-content-between gap-2 py-2">
+                <div class="container-fluid site-container d-flex flex-wrap align-items-center justify-content-between gap-2 py-2">
                     <span><i class="bi bi-person-gear me-1"></i><strong>An admin edited this post.</strong> Only you see this note; readers see the post as it is now.</span>
                     <a href="{{ route('posts.changes', $post) }}" class="btn btn-sm btn-outline-accent">See what changed</a>
                 </div>
@@ -66,10 +66,11 @@
         @endif
     @endauth
 
+    {{-- Full width like the header, with roomier side margins and a wide gap before the category list. --}}
     <section class="section">
-        <div class="container">
-            <div class="row g-4">
-                <div class="col-lg-8">
+        <div class="container-fluid site-container">
+            <div class="row g-4 gx-lg-5">
+                <div class="col-lg-8 col-xxl-9">
                     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
                         {{-- The title is right below, so the trail stops at the category. --}}
                         <x-breadcrumbs :ends-with-current-page="false"
@@ -118,16 +119,16 @@
                     @if ($moreFromAuthor->isNotEmpty())
                         <div class="mt-4">
                             <h2 class="h6 text-uppercase text-secondary mb-2">More from {{ $post->user->name }}</h2>
-                            <ul class="list-unstyled mb-0">
+                            <ol class="more-from-list mb-0">
                                 @foreach ($moreFromAuthor as $other)
-                                    <li class="mb-1"><a href="{{ route('posts.show', $other) }}">{{ $other->title }}</a></li>
+                                    <li><a href="{{ route('posts.show', $other) }}">{{ $other->title }}</a></li>
                                 @endforeach
-                            </ul>
+                            </ol>
                         </div>
                     @endif
                 </div>
 
-                <div class="col-lg-3 offset-lg-1">
+                <div class="col-lg-4 col-xxl-3 page-sidebar">
                     @include('partials.category-sidebar', ['activeCategory' => $post->category?->slug])
                 </div>
             </div>

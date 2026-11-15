@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Posts;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\LogPostView;
 use App\Models\Post;
+use App\Models\Setting;
 use App\Services\PostComments;
 use App\Services\PostLikes;
 use App\Services\PostSharing;
@@ -73,8 +75,16 @@ class PostController extends Controller
         ]);
     }
 
+    private function isBot(Request $request): bool
+    {
+        $agent = (string) $request->userAgent();
+
+        return $agent === '' || preg_match((string) config('muallam.bot_user_agents'), $agent) === 1;
+    }
+
     /**
      * One view per visitor session; authors reading their own post are not counted.
+     * While admins have view logging on, the view is also logged with the visitor's country (after the page is sent).
      */
     private function countView(Request $request, Post $post): void
     {
@@ -91,6 +101,10 @@ class PostController extends Controller
         // Query-builder increment, so the post's "updated" time is not touched.
         Post::whereKey($post->getKey())->toBase()->increment('views_count');
         $post->views_count++;
+
+        if (Setting::enabled(Setting::LOG_VIEW_COUNTRIES) && ! $this->isBot($request)) {
+            dispatch(new LogPostView($post->getKey(), $request->user()?->getKey(), $request->ip(), now()))->afterResponse();
+        }
 
         $request->session()->put('viewed_posts', [...$viewed, $post->getKey()]);
     }

@@ -5,7 +5,7 @@
 
 @section('content')
     <section class="section">
-        <div class="container">
+        <div class="container-fluid site-container">
             <x-breadcrumbs class="mb-3" :items="[[$author->name]]" />
             <div class="d-flex align-items-center gap-3 mb-4">
                 <x-user-avatar :user="$author" :size="72" />

@@ -8,7 +8,7 @@
 
 @section('content')
     <section class="error-page">
-        <div class="container text-center" x-data="{ seconds: {{ $retryAfter }} }"
+        <div class="container-fluid site-container text-center" x-data="{ seconds: {{ $retryAfter }} }"
              x-init="const timer = setInterval(() => { if (seconds > 0) { seconds-- } else { clearInterval(timer) } }, 1000)">
             <div class="error-code mb-3">429</div>
             <h2 class="mb-3">Too many attempts</h2>

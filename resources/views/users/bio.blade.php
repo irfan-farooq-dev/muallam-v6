@@ -13,7 +13,7 @@
 
 @section('content')
     <section class="section">
-        <div class="container">
+        <div class="container-fluid site-container">
             <div class="row justify-content-center">
                 <div class="col-lg-8">
                     <x-breadcrumbs class="mb-3" :items="[[$profileUser->name, route('users.posts', $profileUser->slug)], ['About']]" />

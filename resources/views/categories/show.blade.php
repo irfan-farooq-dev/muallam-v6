@@ -5,7 +5,7 @@
 
 @section('content')
     <section class="section">
-        <div class="container">
+        <div class="container-fluid site-container">
             <x-breadcrumbs class="mb-2" :items="[['Categories', route('categories.index')], [$category->name]]" />
             <h2 class="h3 mb-1">{{ $category->name }}</h2>
             @if ($category->description)

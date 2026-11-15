@@ -66,7 +66,7 @@
                             </td>
                             <td><x-post-status-badge :post="$post" /></td>
                             <td class="text-end text-nowrap small">
-                                <span title="Views"><i class="bx bx-show"></i> {{ number_format($post->views_count) }}</span>
+                                <a href="{{ route('admin.views.index', ['post' => $post->slug]) }}" title="Views (see countries)" class="text-reset"><i class="bx bx-show"></i> {{ number_format($post->views_count) }}</a>
                                 <span class="ms-2" title="Likes"><i class="bx bx-like"></i> {{ number_format($post->likes_count) }}</span>
                                 <a href="{{ route('admin.comments.index', ['post' => $post->id]) }}" class="ms-2 text-body" title="Manage comments on this post"><i class="bx bx-comment"></i> {{ number_format($post->comments_count) }}</a>
                             </td>

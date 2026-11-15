@@ -6,7 +6,7 @@
 
 @section('content')
     <div class="preview-banner">
-        <div class="container d-flex flex-wrap align-items-center justify-content-between gap-2 py-2">
+        <div class="container-fluid site-container d-flex flex-wrap align-items-center justify-content-between gap-2 py-2">
             <span>
                 <i class="bi bi-eye me-1"></i><strong>Preview.</strong> This is how readers will see your post.
                 @if ($isScheduled)
@@ -20,7 +20,7 @@
     </div>
 
     <section class="section">
-        <div class="container">
+        <div class="container-fluid site-container">
             <h2 class="h6 text-uppercase text-secondary mb-3">On the home page and category lists</h2>
             <div class="row mb-5">
                 <div class="col-md-6 col-lg-4">

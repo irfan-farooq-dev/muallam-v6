@@ -13,6 +13,7 @@ Schedule::useCache('file');
 
 Schedule::command('posts:prune-images')->daily()->withoutOverlapping();
 Schedule::command('notifications:prune')->daily()->withoutOverlapping();
+Schedule::command('views:prune')->daily()->withoutOverlapping();
 
 // Finishes installing a newly uploaded release (does nothing when there is no new RELEASE file).
 Schedule::command('site:deploy')->everyMinute()->withoutOverlapping()->appendOutputTo(storage_path('logs/deploy.log'));
