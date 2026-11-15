@@ -33,6 +33,8 @@
             'featuredImage' => $post->featuredImageUrl(),
             'isLive' => $isLive,
             'imageUploadUrl' => route('posts.images.store'),
+            'titleMin' => \App\Http\Requests\Posts\SavePostRequest::TITLE_MIN,
+            'bodyMin' => \App\Http\Requests\Posts\SavePostRequest::BODY_MIN_CHARACTERS,
             // Reopen on the step that has the problem: title or content errors on "Write", any other error on the options.
             'step' => match (true) {
                 $errors->hasAny(['title', 'body']) => 1,
@@ -111,17 +113,50 @@
         <div x-show="step === 1" x-cloak data-step="1">
             <div class="mb-3">
                 <label for="title" class="form-label fw-semibold">Title</label>
-                <input type="text" id="title" name="title" maxlength="200" required
+                <input type="text" id="title" name="title" maxlength="{{ \App\Http\Requests\Posts\SavePostRequest::TITLE_MAX }}" required
                        value="{{ old('title', $post->title) }}" x-ref="title"
                        @class(['form-control form-control-lg', 'is-invalid' => $errors->has('title')])
-                       @input="dirty = true; stepError = ''">
-                <div class="field-error">{{ $errors->first('title') }}</div>
+                       @input="dirty = true; stepError = ''; titleLength = $event.target.value.trim().length">
+                <div class="d-flex justify-content-between gap-2">
+                    <div class="field-error">{{ $errors->first('title') }}</div>
+                    <small class="option-help text-nowrap" x-cloak x-show="titleLength < initial.titleMin">
+                        <span x-text="titleLength"></span> / at least <span x-text="initial.titleMin"></span> characters
+                    </small>
+                </div>
             </div>
 
             <div class="mb-3">
                 <label class="form-label fw-semibold" id="body-label">Content</label>
-                <div @class(['post-editor', 'is-invalid' => $errors->has('body')])>
+                <div @class(['post-editor', 'is-invalid' => $errors->has('body')]) x-ref="editorWrap">
                     <div x-ref="editor" aria-labelledby="body-label"></div>
+
+                    {{-- Medium-style helpers, so formatting is at hand anywhere in a long post (the toolbar also stays visible while scrolling).
+                         mousedown.prevent keeps the text selected while a button is clicked. --}}
+                    <div class="editor-bubble" x-ref="bubble" x-show="bubble.show" x-cloak role="toolbar" aria-label="Format selected text"
+                         :style="`top: ${bubble.top}px; left: ${bubble.left}px`" @mousedown.prevent>
+                        <button type="button" :class="formats.bold && 'active'" @click="formatSelection('bold')" title="Bold (Ctrl+B)" aria-label="Bold"><i class="bi bi-type-bold"></i></button>
+                        <button type="button" :class="formats.italic && 'active'" @click="formatSelection('italic')" title="Italic (Ctrl+I)" aria-label="Italic"><i class="bi bi-type-italic"></i></button>
+                        <button type="button" :class="formats.underline && 'active'" @click="formatSelection('underline')" title="Underline (Ctrl+U)" aria-label="Underline"><i class="bi bi-type-underline"></i></button>
+                        <button type="button" :class="formats.link && 'active'" @click="formatSelection('link')" title="Link" aria-label="Link"><i class="bi bi-link-45deg"></i></button>
+                        <span class="editor-bubble-separator" aria-hidden="true"></span>
+                        <button type="button" :class="formats.header === 2 && 'active'" @click="formatSelection('header', 2)" title="Heading" aria-label="Heading"><i class="bi bi-type-h2"></i></button>
+                        <button type="button" :class="formats.header === 3 && 'active'" @click="formatSelection('header', 3)" title="Small heading" aria-label="Small heading"><i class="bi bi-type-h3"></i></button>
+                        <button type="button" :class="formats.blockquote && 'active'" @click="formatSelection('blockquote')" title="Quote" aria-label="Quote"><i class="bi bi-quote"></i></button>
+                        <button type="button" :class="formats.code && 'active'" @click="formatSelection('code')" title="Code" aria-label="Code"><i class="bi bi-code"></i></button>
+                    </div>
+
+                    <div class="editor-plus" x-show="plus.show" x-cloak :style="`top: ${plus.top}px`" @mousedown.prevent @keydown.escape="plus.open = false">
+                        <button type="button" class="editor-plus-toggle" :class="plus.open && 'open'" @click="plus.open = !plus.open"
+                                :aria-expanded="plus.open" title="Insert" aria-label="Insert image, heading, list, quote or code"><i class="bi bi-plus-lg"></i></button>
+                        <div class="editor-plus-menu" x-show="plus.open" role="menu">
+                            <button type="button" role="menuitem" @click="insertImageHere()" title="Image"><i class="bi bi-image"></i></button>
+                            <button type="button" role="menuitem" @click="formatEmptyLine('header', 2)" title="Heading"><i class="bi bi-type-h2"></i></button>
+                            <button type="button" role="menuitem" @click="formatEmptyLine('list', 'bullet')" title="Bulleted list"><i class="bi bi-list-ul"></i></button>
+                            <button type="button" role="menuitem" @click="formatEmptyLine('list', 'ordered')" title="Numbered list"><i class="bi bi-list-ol"></i></button>
+                            <button type="button" role="menuitem" @click="formatEmptyLine('blockquote', true)" title="Quote"><i class="bi bi-quote"></i></button>
+                            <button type="button" role="menuitem" @click="formatEmptyLine('code-block', true)" title="Code block"><i class="bi bi-code-slash"></i></button>
+                        </div>
+                    </div>
                 </div>
                 <input type="hidden" name="body" x-ref="body">
                 <input type="file" accept="image/jpeg,image/png,image/webp" class="d-none" x-ref="inlineImage" @change="chooseInlineImage($event)">
@@ -136,7 +171,12 @@
                     </div>
                 </div>
                 <div class="field-error" x-show="imageError" x-text="imageError" x-cloak></div>
-                <div class="field-error">{{ $errors->first('body') }}</div>
+                <div class="d-flex justify-content-between gap-2">
+                    <div class="field-error">{{ $errors->first('body') }}</div>
+                    <small class="option-help text-nowrap" x-cloak x-show="bodyLength < initial.bodyMin">
+                        <span x-text="bodyLength"></span> / at least <span x-text="initial.bodyMin"></span> characters
+                    </small>
+                </div>
             </div>
 
             <div class="d-flex flex-wrap align-items-center justify-content-end gap-3">
@@ -312,6 +352,14 @@
                 timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
                 isLive: initial.isLive,
                 uploading: 0,
+                initial,
+                titleLength: 0,
+                bodyLength: 0,
+                bubble: { show: false, top: 0, left: 0 },
+                plus: { show: false, open: false, top: 0, index: 0 },
+                formats: {},
+                // Where a picture chosen from the "+" menu goes (null = at the cursor).
+                imageIndex: null,
                 uploadPercent: 0,
                 imageError: '',
                 preview: initial.featuredImage,
@@ -345,12 +393,20 @@
 
                     quill.getModule('toolbar').addHandler('image', () => this.$refs.inlineImage.click());
 
+                    // The toolbar sticks just below the site header while a long post is scrolled.
+                    document.documentElement.style.setProperty('--editor-sticky-top', `${document.getElementById('header')?.offsetHeight ?? 0}px`);
+                    quill.on('editor-change', () => this.updateFloatingTools());
+                    window.addEventListener('resize', () => this.updateFloatingTools());
+
                     if (initial.body) {
                         quill.clipboard.dangerouslyPasteHTML(initial.body, 'silent');
                     }
+                    this.titleLength = this.$refs.title.value.trim().length;
+                    this.bodyLength = this.textLength();
                     quill.on('text-change', () => {
                         this.dirty = true;
                         this.stepError = '';
+                        this.bodyLength = this.textLength();
                     });
 
                     window.addEventListener('beforeunload', (event) => {
@@ -418,11 +474,97 @@
                 chooseInlineImage(event) {
                     const file = event.target.files[0];
                     event.target.value = '';
+                    const chosenIndex = this.imageIndex;
+                    this.imageIndex = null;
                     if (!file) return;
 
                     // The post title describes the image for screen readers and search engines, so writers are not asked.
                     const range = quill.getSelection(true);
-                    this.uploadImage(file, range ? range.index : quill.getLength(), this.$refs.title.value.trim());
+                    const index = chosenIndex ?? (range ? range.index : quill.getLength());
+                    this.uploadImage(file, index, this.$refs.title.value.trim());
+                },
+
+                /*
+                 * Selected text: a small format bar above it. Cursor on an empty line: a "+" at the start of the line
+                 * (image, heading, lists, quote, code). Positions are relative to the editor box (.post-editor).
+                 */
+                async updateFloatingTools() {
+                    const range = quill.getSelection();
+                    const container = quill.container;
+
+                    if (!range) {
+                        this.bubble.show = false;
+                        this.plus.show = false;
+                        this.plus.open = false;
+                        return;
+                    }
+
+                    if (range.length > 0) {
+                        this.plus.show = false;
+                        this.plus.open = false;
+                        this.formats = quill.getFormat(range);
+                        this.bubble.show = true;
+                        await this.$nextTick();
+
+                        const bounds = quill.getBounds(range.index, range.length);
+                        const bubble = this.$refs.bubble;
+                        const maxLeft = this.$refs.editorWrap.clientWidth - bubble.offsetWidth;
+                        const above = container.offsetTop + bounds.top - bubble.offsetHeight - 8;
+
+                        this.bubble.left = Math.max(0, Math.min(maxLeft, container.offsetLeft + bounds.left + bounds.width / 2 - bubble.offsetWidth / 2));
+                        this.bubble.top = above >= container.offsetTop ? above : container.offsetTop + bounds.bottom + 8;
+                        return;
+                    }
+
+                    this.bubble.show = false;
+                    const [line] = quill.getLine(range.index);
+                    const isEmptyParagraph = line && line.length() === 1 && line.domNode.tagName === 'P';
+
+                    if (!isEmptyParagraph) {
+                        this.plus.show = false;
+                        this.plus.open = false;
+                        return;
+                    }
+
+                    const bounds = quill.getBounds(range.index);
+                    this.plus.index = range.index;
+                    this.plus.top = container.offsetTop + bounds.top + bounds.height / 2 - 15;
+                    this.plus.show = true;
+                },
+
+                formatSelection(name, value = true) {
+                    const range = quill.getSelection();
+                    if (!range) return;
+
+                    if (name === 'link') {
+                        if (this.formats.link) {
+                            quill.format('link', false, 'user');
+                        } else {
+                            // Quill's own link box (the same one the toolbar uses).
+                            const toolbar = quill.getModule('toolbar');
+                            toolbar.handlers.link.call(toolbar, true);
+                            this.bubble.show = false;
+                            return;
+                        }
+                    } else if (name === 'header') {
+                        quill.format('header', this.formats.header === value ? false : value, 'user');
+                    } else {
+                        quill.format(name, !this.formats[name], 'user');
+                    }
+
+                    this.formats = quill.getFormat(quill.getSelection() ?? range);
+                },
+
+                insertImageHere() {
+                    this.plus.open = false;
+                    this.imageIndex = this.plus.index;
+                    this.$refs.inlineImage.click();
+                },
+
+                formatEmptyLine(name, value) {
+                    quill.formatLine(this.plus.index, 1, name, value, 'user');
+                    quill.setSelection(this.plus.index, 0, 'user');
+                    this.plus.open = false;
                 },
 
                 get publishLabel() {
@@ -453,18 +595,25 @@
                     this.dirty = true;
                 },
 
-                // The server checks everything again; this only stops an obviously empty post from reaching step 2.
+                // Readable characters, counted like the server does (PostBodySanitizer::textLength): runs of spaces and line breaks count as one.
+                textLength() {
+                    return quill.getText().replace(/\s+/g, ' ').trim().length;
+                },
+
+                // The server checks everything again; this only stops a too-short post from reaching step 2.
                 goToOptions() {
-                    if (this.$refs.title.value.trim() === '') {
+                    if (this.titleLength < initial.titleMin) {
                         this.step = 1;
-                        this.stepError = 'Please add a title first.';
+                        this.stepError = this.titleLength === 0 ? 'Please add a title first.' : `The title must be at least ${initial.titleMin} characters long.`;
                         this.$refs.title.focus();
                         return;
                     }
 
-                    if (quill.getText().trim() === '' && !quill.root.querySelector('img')) {
+                    if (this.bodyLength < initial.bodyMin) {
                         this.step = 1;
-                        this.stepError = 'Please write some content first.';
+                        this.stepError = this.bodyLength === 0
+                            ? 'Please write some content first.'
+                            : `The content must be at least ${initial.bodyMin} characters long (it has ${this.bodyLength}).`;
                         quill.focus();
                         return;
                     }

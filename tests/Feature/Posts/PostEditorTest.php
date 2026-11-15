@@ -33,7 +33,7 @@ class PostEditorTest extends TestCase
             'title' => 'My First Post',
             'summary' => 'A short summary.',
             'category_id' => Category::factory()->create()->id,
-            'body' => '<p>Hello <strong>world</strong>.</p>',
+            'body' => self::longEnough('<p>Hello <strong>world</strong>.</p>'),
             'action' => 'draft',
             'visibility' => 'public',
             'allow_comments' => '1',
@@ -136,7 +136,10 @@ class PostEditorTest extends TestCase
     {
         return [
             'missing title' => [['title' => ''], 'title'],
+            'title under 10 characters' => [['title' => 'Too short'], 'title'],
             'title over 200 characters' => [['title' => str_repeat('a', 201)], 'title'],
+            'content under 200 characters' => [['body' => '<p>'.str_repeat('a', 199).'</p>'], 'body'],
+            'content padded with spaces and an image' => [['body' => '<p>'.str_repeat('a ', 90).'</p><p>          </p><p><img src="/storage/a.webp" alt="x"></p>'], 'body'],
             'summary over 500 characters' => [['summary' => str_repeat('a', 501)], 'summary'],
             'empty editor' => [['body' => '<p><br></p>'], 'body'],
             'only a script' => [['body' => '<script>alert(1)</script>'], 'body'],
@@ -165,6 +168,33 @@ class PostEditorTest extends TestCase
         $this->actingAs(User::factory()->create())->get(route('posts.create'))
             ->assertSee('<input type="hidden" name="action"', false)
             ->assertDontSee('name="action" value="publish" class="btn', false);
+    }
+
+    public function test_minimum_lengths_are_explained_and_exactly_the_minimum_is_enough(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->post(route('posts.store'), $this->input(['title' => 'Too short', 'body' => '<p>Only a few words here.</p>']))
+            ->assertSessionHasErrors([
+                'title' => 'The title must be at least 10 characters long.',
+                'body' => 'The content must be at least 200 characters long (it has 22).',
+            ]);
+
+        // Two paragraphs count as separated by one space: 100 + 1 + 99 = 200.
+        $this->actingAs($user)->post(route('posts.store'), $this->input([
+            'title' => 'Ten chars!',
+            'body' => '<p>'.str_repeat('b', 100).'</p><p><strong>'.str_repeat('c', 99).'</strong></p>',
+        ]))->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('posts', ['title' => 'Ten chars!']);
+    }
+
+    public function test_editor_shows_the_minimum_lengths(): void
+    {
+        $this->actingAs(User::factory()->create())->get(route('posts.create'))
+            ->assertSee('\u0022titleMin\u0022:10', false)
+            ->assertSee('\u0022bodyMin\u0022:200', false)
+            ->assertSee('/ at least <span x-text="initial.bodyMin"></span> characters', false);
     }
 
     public function test_editor_has_a_write_step_and_a_compact_publishing_options_step(): void
@@ -241,8 +271,8 @@ class PostEditorTest extends TestCase
             ->assertRedirect(route('posts.mine'))
             ->assertSessionHas('success', 'Post created and published.');
 
-        $this->actingAs($user)->post(route('posts.store'), $this->input(['title' => 'Secret', 'action' => 'publish', 'visibility' => 'restricted', 'access_password' => 'secret123']))
-            ->assertRedirect(route('posts.edit', 'secret').'#sharing');
+        $this->actingAs($user)->post(route('posts.store'), $this->input(['title' => 'Secret garden notes', 'action' => 'publish', 'visibility' => 'restricted', 'access_password' => 'secret123']))
+            ->assertRedirect(route('posts.edit', 'secret-garden-notes').'#sharing');
     }
 
     public function test_admin_editing_someone_elses_post_returns_to_the_admin_post_list(): void
@@ -311,7 +341,7 @@ class PostEditorTest extends TestCase
     public function test_post_body_is_cleaned_of_dangerous_html(): void
     {
         $this->actingAs(User::factory()->create())->post(route('posts.store'), $this->input([
-            'body' => '<h2 class="ql-align-center">Intro</h2>'
+            'body' => self::longEnough('<h2 class="ql-align-center">Intro</h2>')
                 .'<p onclick="steal()">Safe <em>text</em><script>alert(1)</script></p>'
                 .'<p><a href="javascript:alert(1)">bad link</a> <a href="https://example.com">good link</a></p>'
                 .'<ul><li>One</li></ul><iframe src="https://evil.test"></iframe>'
@@ -333,10 +363,10 @@ class PostEditorTest extends TestCase
     public function test_non_breaking_spaces_from_the_editor_become_normal_spaces(): void
     {
         $this->actingAs(User::factory()->create())->post(route('posts.store'), $this->input([
-            'body' => '<p>Text&nbsp;with&nbsp;spaces</p>',
+            'body' => self::longEnough('<p>Text&nbsp;with&nbsp;spaces</p>'),
         ]));
 
-        $this->assertSame('<p>Text with spaces</p>', Post::sole()->body);
+        $this->assertSame(self::longEnough('<p>Text with spaces</p>'), Post::sole()->body);
     }
 
     public function test_featured_image_is_stored_as_a_webp_no_wider_than_1600px(): void
@@ -367,12 +397,12 @@ class PostEditorTest extends TestCase
 
         $this->actingAs($user)->get(route('posts.edit', $post))->assertOk()->assertSee('Edit post')->assertSee('Old title');
 
-        $this->actingAs($user)->put(route('posts.update', $post), $this->input(['title' => 'New title']))
+        $this->actingAs($user)->put(route('posts.update', $post), $this->input(['title' => 'A brand new title']))
             ->assertRedirect(route('posts.mine'))
             ->assertSessionHas('success', 'Post saved as a draft.');
 
         $post->refresh();
-        $this->assertSame('New title', $post->title);
+        $this->assertSame('A brand new title', $post->title);
         $this->assertSame('old-title', $post->slug);
     }
 

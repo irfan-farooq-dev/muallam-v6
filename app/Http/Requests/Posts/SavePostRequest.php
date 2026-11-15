@@ -16,6 +16,15 @@ use Illuminate\Validation\Rule;
  */
 class SavePostRequest extends FormRequest
 {
+    public const TITLE_MIN = 10;
+
+    public const TITLE_MAX = 200;
+
+    /**
+     * Readable characters in the content (formatting and images do not count): roughly two or three sentences.
+     */
+    public const BODY_MIN_CHARACTERS = 200;
+
     public const SUMMARY_MAX = 500;
 
     public const IMAGE_MAX_KILOBYTES = 4096;
@@ -66,14 +75,18 @@ class SavePostRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => ['required', 'string', 'max:200'],
+            'title' => ['required', 'string', 'min:'.self::TITLE_MIN, 'max:'.self::TITLE_MAX],
             'summary' => ['nullable', 'string', 'max:'.self::SUMMARY_MAX],
             'category_id' => ['required', 'integer', Rule::exists('categories', 'id')->where('is_active', true)],
             'action' => ['required', 'in:draft,publish'],
             'visibility' => ['required', Rule::in($this->allowedVisibilities())],
             'body' => ['required', 'string', function (string $attribute, mixed $value, Closure $fail): void {
-                if (! app(PostBodySanitizer::class)->hasContent((string) $value)) {
+                $sanitizer = app(PostBodySanitizer::class);
+
+                if (! $sanitizer->hasContent((string) $value)) {
                     $fail('Write something in the post before saving.');
+                } elseif (($length = $sanitizer->textLength((string) $value)) < self::BODY_MIN_CHARACTERS) {
+                    $fail('The content must be at least '.self::BODY_MIN_CHARACTERS." characters long (it has {$length}).");
                 }
             }],
             'status' => ['required', Rule::in(array_map(fn (PostStatus $status): string => $status->value, self::editableStatuses()))],
@@ -107,6 +120,7 @@ class SavePostRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'title.min' => 'The title must be at least '.self::TITLE_MIN.' characters long.',
             'category_id.required' => 'Choose a category.',
             'access_password.required' => 'Set a password that invited readers will need to open the post.',
             'access_password.min' => 'The post password must be at least '.self::ACCESS_PASSWORD_MIN.' characters.',

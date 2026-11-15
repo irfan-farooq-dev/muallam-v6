@@ -88,6 +88,17 @@ class PostBodySanitizer
     }
 
     /**
+     * Number of readable characters (letters, digits, spaces between words), ignoring tags and images.
+     * Blocks are counted as separated by one space, so "<p>a</p><p>b</p>" is "a b" (3).
+     */
+    public function textLength(string $html): int
+    {
+        $text = html_entity_decode(strip_tags((string) preg_replace('#</(p|h[1-6]|li|blockquote|pre)>#i', '$0 ', $html)), ENT_QUOTES | ENT_HTML5);
+
+        return mb_strlen(trim((string) preg_replace('/\s+/u', ' ', str_replace("\u{00A0}", ' ', $text))));
+    }
+
+    /**
      * True when the cleaned HTML has readable text or an image, i.e. it is not just "<p><br></p>".
      */
     public function hasContent(string $html): bool

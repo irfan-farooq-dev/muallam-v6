@@ -33,7 +33,7 @@ class EncodedPostFieldsTest extends TestCase
             'encoded_fields' => $this->encode([
                 'title' => 'Distributed Systems: Foundations',
                 'summary' => 'SELECT * FROM ideas; <a href="https://example.com/?a=1&b=2">link</a>',
-                'body' => '<p>اردو متن and <a href="https://example.com/?q=union+select">a link</a></p><p><img src="/storage/posts/1/body/a.webp" alt="Diagram"></p>',
+                'body' => self::longEnough('<p>اردو متن and <a href="https://example.com/?q=union+select">a link</a></p><p><img src="/storage/posts/1/body/a.webp" alt="Diagram"></p>'),
             ]),
             'category_id' => Category::factory()->create()->id,
             'action' => 'draft',
@@ -80,7 +80,7 @@ class EncodedPostFieldsTest extends TestCase
     {
         $user = User::factory()->create();
         $input = $this->input();
-        $input['encoded_fields'] = $this->encode(['title' => 'Mine', 'body' => '<p>Text</p>', 'user_id' => (string) User::factory()->create()->id]);
+        $input['encoded_fields'] = $this->encode(['title' => 'Mine, with a long title', 'body' => self::longEnough('<p>Text</p>'), 'user_id' => (string) User::factory()->create()->id]);
 
         $this->actingAs($user)->post(route('posts.store'), $input)->assertSessionHasNoErrors();
 

@@ -58,7 +58,7 @@ class RestrictedSharingTest extends TestCase
         $this->actingAs($this->author)->put(route('posts.update', $post), [
             'title' => $post->title,
             'category_id' => Category::factory()->create()->id,
-            'body' => '<p>Text</p>',
+            'body' => self::longEnough('<p>Text</p>'),
             'action' => 'publish',
             'visibility' => 'restricted',
             'access_password' => 'family-only',
@@ -75,7 +75,7 @@ class RestrictedSharingTest extends TestCase
         $this->actingAs($this->author)->put(route('posts.update', $this->post), [
             'title' => 'Family recipes',
             'category_id' => Category::factory()->create()->id,
-            'body' => '<p>Text</p>',
+            'body' => self::longEnough('<p>Text</p>'),
             'action' => 'publish',
             'visibility' => 'restricted',
             'access_password' => '',

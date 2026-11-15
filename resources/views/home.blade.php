@@ -34,21 +34,26 @@
 
 @section('content')
     @if ($posts->onFirstPage())
+        {{-- Compact intro: heading and one-line description on the left, search on the right (stacked on phones). --}}
         <section class="section home-hero light-background">
-            <div class="container-fluid site-container text-center">
-                <h2 class="display-5 fw-semibold mb-3">Learn something new today</h2>
-                <p class="lead text-secondary mb-4 mx-auto home-hero-lead">
-                    Muallam is a place to read and write clear, practical articles on the topics you care about.
-                </p>
-                <form method="GET" action="{{ route('search') }}" class="home-search mx-auto mb-3" role="search">
-                    <div class="input-group input-group-lg">
-                        <input type="search" name="q" class="form-control" placeholder="Search articles" aria-label="Search articles">
-                        <button class="btn btn-accent" type="submit"><i class="bi bi-search"></i></button>
+            <div class="container-fluid site-container">
+                <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3">
+                    <div>
+                        <h2 class="home-hero-title fw-semibold mb-1">Learn something new today</h2>
+                        <p class="text-secondary mb-0">Muallam is a place to read and write clear, practical articles on the topics you care about.</p>
                     </div>
-                </form>
-                @guest
-                    <a href="{{ route('login') }}" class="btn btn-outline-accent">Start writing</a>
-                @endguest
+                    <div class="home-hero-actions d-flex flex-column flex-sm-row align-items-sm-center gap-2">
+                        <form method="GET" action="{{ route('search') }}" class="home-search flex-grow-1" role="search">
+                            <div class="input-group">
+                                <input type="search" name="q" class="form-control" placeholder="Search articles" aria-label="Search articles">
+                                <button class="btn btn-accent" type="submit" aria-label="Search"><i class="bi bi-search"></i></button>
+                            </div>
+                        </form>
+                        @guest
+                            <a href="{{ route('login') }}" class="btn btn-outline-accent text-nowrap">Start writing</a>
+                        @endguest
+                    </div>
+                </div>
             </div>
         </section>
     @endif

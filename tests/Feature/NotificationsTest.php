@@ -31,7 +31,7 @@ class NotificationsTest extends TestCase
         Storage::fake('public');
         $this->author = User::factory()->create(['name' => 'Amina Khan']);
         $this->admin = User::factory()->admin()->create(['name' => 'Site Admin']);
-        $this->post = Post::factory()->published()->for($this->author)->create(['title' => 'My garden', 'slug' => 'my-garden']);
+        $this->post = Post::factory()->published()->for($this->author)->create(['title' => 'My garden plot', 'slug' => 'my-garden']);
     }
 
     /**
@@ -62,7 +62,7 @@ class NotificationsTest extends TestCase
             'title' => 'Fresh post',
             'summary' => 'A short summary.',
             'category_id' => Category::factory()->create()->id,
-            'body' => '<p>Hello world.</p>',
+            'body' => self::longEnough('<p>Hello world.</p>'),
             'action' => 'publish',
             'visibility' => 'public',
             'allow_comments' => '1',
@@ -76,7 +76,7 @@ class NotificationsTest extends TestCase
         $omar = User::factory()->create(['name' => 'Omar']);
 
         $this->actingAs($ali)->postJson(route('posts.like', $this->post));
-        $this->assertSame('Ali liked your post “My garden”', $this->dataFor($this->author)[0]['message']);
+        $this->assertSame('Ali liked your post “My garden plot”', $this->dataFor($this->author)[0]['message']);
 
         $this->actingAs($sara)->postJson(route('posts.like', $this->post));
         $this->actingAs($omar)->postJson(route('posts.like', $this->post));
@@ -86,7 +86,7 @@ class NotificationsTest extends TestCase
 
         $likes = $this->dataFor($this->author, NotificationKind::PostLiked);
         $this->assertCount(1, $likes);
-        $this->assertSame('Ali and 2 others liked your post “My garden”', $likes[0]['message']);
+        $this->assertSame('Ali and 2 others liked your post “My garden plot”', $likes[0]['message']);
         $this->assertSame('/posts/my-garden', $likes[0]['url']);
     }
 
@@ -108,7 +108,7 @@ class NotificationsTest extends TestCase
 
         $authorNote = $this->dataFor($this->author)[0];
         $this->assertSame(NotificationKind::PostCommented->value, $authorNote['kind']);
-        $this->assertSame('Ali commented on your post “My garden”', $authorNote['message']);
+        $this->assertSame('Ali commented on your post “My garden plot”', $authorNote['message']);
         $this->assertSame('Lovely post', $authorNote['excerpt']);
         $this->assertSame('/posts/my-garden#comment-'.$comment->id, $authorNote['url']);
 
@@ -129,8 +129,8 @@ class NotificationsTest extends TestCase
 
         $this->comment($sara, 'Agreed', $first);
 
-        $this->assertSame('Sara replied to your comment on “My garden”', $this->dataFor($ali, NotificationKind::CommentReplied)[0]['message']);
-        $this->assertSame('Sara replied to a comment on your post “My garden”', $this->dataFor($this->author)[0]['message']);
+        $this->assertSame('Sara replied to your comment on “My garden plot”', $this->dataFor($ali, NotificationKind::CommentReplied)[0]['message']);
+        $this->assertSame('Sara replied to a comment on your post “My garden plot”', $this->dataFor($this->author)[0]['message']);
         $this->assertCount(1, $this->dataFor($this->admin, NotificationKind::NewComment));
 
         // The author replying to Ali: Ali hears about it; the author is not told about their own reply.
@@ -192,13 +192,13 @@ class NotificationsTest extends TestCase
 
     public function test_author_hears_about_admin_edits_grouped_with_a_link_to_the_changes(): void
     {
-        $input = ['title' => 'My garden', 'body' => '<p>Changed.</p>', 'category_id' => Category::factory()->create()->id];
+        $input = ['title' => 'My garden plot', 'body' => self::longEnough('<p>Changed.</p>'), 'category_id' => Category::factory()->create()->id];
         $this->actingAs($this->admin)->put(route('posts.update', $this->post), $this->postInput($input));
-        $this->actingAs($this->admin)->put(route('posts.update', $this->post), $this->postInput([...$input, 'body' => '<p>Changed again.</p>']));
+        $this->actingAs($this->admin)->put(route('posts.update', $this->post), $this->postInput([...$input, 'body' => self::longEnough('<p>Changed again.</p>')]));
 
         $edits = $this->dataFor($this->author, NotificationKind::PostEditedByAdmin);
         $this->assertCount(1, $edits);
-        $this->assertSame('An admin edited your post “My garden”', $edits[0]['message']);
+        $this->assertSame('An admin edited your post “My garden plot”', $edits[0]['message']);
         $this->assertSame('/posts/my-garden/changes', $edits[0]['url']);
     }
 
@@ -209,13 +209,13 @@ class NotificationsTest extends TestCase
 
         $this->actingAs($this->admin)->delete(route('admin.posts.destroy', $this->post));
         $deleted = $this->dataFor($this->author, NotificationKind::PostDeletedByAdmin)[0];
-        $this->assertSame('An admin deleted your post “My garden”', $deleted['message']);
+        $this->assertSame('An admin deleted your post “My garden plot”', $deleted['message']);
         $this->assertSame('/my/posts', $deleted['url']);
     }
 
     public function test_admin_unpublishing_from_the_editor_tells_the_author(): void
     {
-        $this->actingAs($this->admin)->put(route('posts.update', $this->post), $this->postInput(['title' => 'My garden', 'action' => 'draft']));
+        $this->actingAs($this->admin)->put(route('posts.update', $this->post), $this->postInput(['title' => 'My garden plot', 'action' => 'draft']));
 
         $this->assertCount(1, $this->dataFor($this->author, NotificationKind::PostUnpublishedByAdmin));
     }
@@ -237,7 +237,7 @@ class NotificationsTest extends TestCase
         $this->actingAs($this->admin)->patch(route('admin.comments.visibility', $first), ['visible' => '0']);
         $this->actingAs($this->admin)->delete(route('admin.comments.destroy', $second));
 
-        $this->assertSame('An admin hid your comment on “My garden”', $this->dataFor($writer, NotificationKind::CommentHiddenByAdmin)[0]['message']);
+        $this->assertSame('An admin hid your comment on “My garden plot”', $this->dataFor($writer, NotificationKind::CommentHiddenByAdmin)[0]['message']);
         $this->assertSame('Spam link', $this->dataFor($writer, NotificationKind::CommentDeletedByAdmin)[0]['excerpt']);
 
         // Showing it again is not announced.
@@ -274,7 +274,7 @@ class NotificationsTest extends TestCase
             ->assertOk()
             ->assertJsonPath('unread', 1)
             ->assertJsonCount(1, 'items')
-            ->assertJsonPath('items.0.message', 'Ali commented on your post “My garden”')
+            ->assertJsonPath('items.0.message', 'Ali commented on your post “My garden plot”')
             ->assertJsonPath('items.0.icon', 'bi-chat')
             ->assertJsonPath('items.0.read', false);
     }
@@ -307,14 +307,14 @@ class NotificationsTest extends TestCase
         $this->actingAs($this->author)->get(route('notifications.index'))
             ->assertOk()
             ->assertSee('2 unread notifications.')
-            ->assertSee('Sara commented on your post “My garden”')
+            ->assertSee('Sara commented on your post “My garden plot”')
             ->assertSee('Mark all as read');
 
         $this->actingAs($this->author)->from(route('notifications.index'))->post(route('notifications.read-all'))
             ->assertRedirect(route('notifications.index'));
         $this->assertSame(0, $this->author->unreadNotifications()->count());
 
-        $this->actingAs($this->admin)->get(route('admin.notifications.index'))->assertOk()->assertSee('Ali commented on “My garden”');
+        $this->actingAs($this->admin)->get(route('admin.notifications.index'))->assertOk()->assertSee('Ali commented on “My garden plot”');
         $this->actingAs($this->author)->get(route('admin.notifications.index'))->assertForbidden();
     }
 

@@ -28,9 +28,9 @@ class AdminEditHighlightsTest extends TestCase
         $this->author = User::factory()->create(['name' => 'Amina Khan']);
         $this->admin = User::factory()->admin()->create(['name' => 'Site Admin']);
         $this->post = Post::factory()->published()->for($this->author)->create([
-            'title' => 'My garden',
+            'title' => 'My garden plot',
             'summary' => 'Notes from spring.',
-            'body' => '<p>The roses grew quickly this year.</p><p>Tomatoes did well.</p>',
+            'body' => self::longEnough('<p>The roses grew quickly this year.</p><p>Tomatoes did well.</p>'),
         ]);
     }
 
@@ -57,14 +57,14 @@ class AdminEditHighlightsTest extends TestCase
 
     public function test_admin_changing_the_words_keeps_the_authors_version(): void
     {
-        $this->adminEdits(['body' => '<p>The roses grew slowly this year.</p><p>Tomatoes did well.</p>']);
+        $this->adminEdits(['body' => self::longEnough('<p>The roses grew slowly this year.</p><p>Tomatoes did well.</p>')]);
 
         $edit = PostAdminEdit::sole();
         $this->assertSame($this->post->id, $edit->post_id);
         $this->assertTrue($edit->editor->is($this->admin));
-        $this->assertSame('My garden', $edit->previous_title);
+        $this->assertSame('My garden plot', $edit->previous_title);
         $this->assertSame('Notes from spring.', $edit->previous_summary);
-        $this->assertSame('<p>The roses grew quickly this year.</p><p>Tomatoes did well.</p>', $edit->previous_body);
+        $this->assertSame(self::longEnough('<p>The roses grew quickly this year.</p><p>Tomatoes did well.</p>'), $edit->previous_body);
         $this->assertNull($edit->resolved_at);
         $this->assertStringContainsString('slowly', $this->post->fresh()->body);
     }
@@ -78,12 +78,12 @@ class AdminEditHighlightsTest extends TestCase
 
     public function test_later_admin_edits_still_compare_with_the_authors_own_version(): void
     {
-        $this->adminEdits(['title' => 'My spring garden']);
+        $this->adminEdits(['title' => 'My spring garden plot']);
         $this->post->refresh();
-        $this->adminEdits(['title' => 'Our spring garden']);
+        $this->adminEdits(['title' => 'Our spring garden plot']);
 
         $edit = PostAdminEdit::sole();
-        $this->assertSame('My garden', $edit->previous_title);
+        $this->assertSame('My garden plot', $edit->previous_title);
     }
 
     public function test_admin_editing_their_own_post_records_nothing(): void
@@ -98,14 +98,14 @@ class AdminEditHighlightsTest extends TestCase
     public function test_author_sees_the_changed_words_highlighted(): void
     {
         $this->adminEdits([
-            'title' => 'My spring garden',
-            'body' => '<p>The roses grew slowly this year.</p><p>Tomatoes did well.</p><p>Next year: peppers.</p>',
+            'title' => 'My spring garden plot',
+            'body' => self::longEnough('<p>The roses grew slowly this year.</p><p>Tomatoes did well.</p><p>Next year: peppers.</p>'),
         ]);
 
         $this->actingAs($this->author)->get(route('posts.changes', $this->post))
             ->assertOk()
             ->assertSee('Site Admin')
-            ->assertSee('My <ins class="diff-added">spring </ins>garden', false)
+            ->assertSee('My <ins class="diff-added">spring </ins>garden plot', false)
             ->assertSee('<del class="diff-removed">quickly</del><ins class="diff-added">slowly</ins>', false)
             ->assertSee('<ins class="diff-added">Next year: peppers.</ins>', false)
             ->assertSee('data-changed-blocks="2"', false)
@@ -114,7 +114,7 @@ class AdminEditHighlightsTest extends TestCase
 
     public function test_readers_only_ever_see_the_plain_post(): void
     {
-        $this->adminEdits(['body' => '<p>The roses grew slowly this year.</p><p>Tomatoes did well.</p>']);
+        $this->adminEdits(['body' => self::longEnough('<p>The roses grew slowly this year.</p><p>Tomatoes did well.</p>')]);
         $this->post(route('logout'));
 
         $this->get(route('posts.show', $this->post))
@@ -130,7 +130,7 @@ class AdminEditHighlightsTest extends TestCase
 
     public function test_author_is_told_on_the_dashboard_my_posts_post_page_and_editor(): void
     {
-        $this->adminEdits(['title' => 'My spring garden']);
+        $this->adminEdits(['title' => 'My spring garden plot']);
         $changesUrl = route('posts.changes', $this->post);
 
         $this->actingAs($this->author)->get(route('dashboard'))->assertSee('An admin edited one of your posts')->assertSee($changesUrl);
@@ -150,7 +150,7 @@ class AdminEditHighlightsTest extends TestCase
 
     public function test_author_can_mark_the_changes_as_reviewed(): void
     {
-        $this->adminEdits(['title' => 'My spring garden']);
+        $this->adminEdits(['title' => 'My spring garden plot']);
 
         $this->actingAs($this->author)->post(route('posts.changes.reviewed', $this->post))
             ->assertRedirect(route('posts.edit', $this->post))
@@ -163,7 +163,7 @@ class AdminEditHighlightsTest extends TestCase
 
     public function test_only_the_author_can_mark_changes_as_reviewed(): void
     {
-        $this->adminEdits(['title' => 'My spring garden']);
+        $this->adminEdits(['title' => 'My spring garden plot']);
 
         $this->actingAs($this->admin)->get(route('posts.changes', $this->post))->assertOk()->assertDontSee('Mark as reviewed');
         $this->actingAs($this->admin)->post(route('posts.changes.reviewed', $this->post))->assertForbidden();
@@ -173,22 +173,22 @@ class AdminEditHighlightsTest extends TestCase
 
     public function test_author_saving_the_post_counts_as_reviewed_and_starts_afresh(): void
     {
-        $this->adminEdits(['title' => 'My spring garden']);
+        $this->adminEdits(['title' => 'My spring garden plot']);
         $this->post->refresh();
 
-        $this->actingAs($this->author)->put(route('posts.update', $this->post), $this->input(['title' => 'My spring garden!']));
+        $this->actingAs($this->author)->put(route('posts.update', $this->post), $this->input(['title' => 'My spring garden plot!']));
         $this->assertNotNull(PostAdminEdit::sole()->resolved_at);
 
         $this->post->refresh();
-        $this->adminEdits(['title' => 'Spring garden']);
+        $this->adminEdits(['title' => 'Spring garden plot']);
 
         $open = $this->post->pendingAdminEdit()->sole();
-        $this->assertSame('My spring garden!', $open->previous_title);
+        $this->assertSame('My spring garden plot!', $open->previous_title);
     }
 
     public function test_deleting_the_admin_keeps_the_record_without_a_name(): void
     {
-        $this->adminEdits(['title' => 'My spring garden']);
+        $this->adminEdits(['title' => 'My spring garden plot']);
 
         $this->admin->delete();
 

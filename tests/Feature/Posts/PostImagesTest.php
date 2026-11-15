@@ -46,7 +46,7 @@ class PostImagesTest extends TestCase
         return [
             'title' => 'Post with images',
             'category_id' => Category::factory()->create()->id,
-            'body' => $body,
+            'body' => self::longEnough($body),
             'action' => 'draft',
             'visibility' => 'public',
         ];

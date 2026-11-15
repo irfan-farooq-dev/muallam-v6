@@ -62,7 +62,7 @@ class HomeAndSearchTest extends TestCase
     public function test_start_writing_sends_guests_to_sign_in(): void
     {
         $this->get(route('home'))
-            ->assertSee('<a href="'.route('login').'" class="btn btn-outline-accent">Start writing</a>', false)
+            ->assertSee('<a href="'.route('login').'" class="btn btn-outline-accent text-nowrap">Start writing</a>', false)
             ->assertSee('<li><a href="'.route('login').'">Start writing</a></li>', false);
     }
 
